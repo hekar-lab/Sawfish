@@ -1,9 +1,9 @@
-from instructions import Field
-from instructions.core import Instruction, InstructionFamily16
-from instructions.util import simpleWriter
-from instructions.pcode import pCOPY, pMACRO, pOP, pPTR, pRETURN, pVAR
+from slaspec.instructions import Field
+from slaspec.instructions import Instruction, InstructionFamily16
+from slaspec.instructions.pcode import pCOPY, pMACRO, pOP, pPTR, pRETURN, pVAR
 from slaspec.const import IMASK
-from slaspec.instructions.vars import Variable
+from slaspec.instructions import Variable
+import inspect
 
 
 class ProgCtrlFamily(InstructionFamily16):
@@ -30,18 +30,21 @@ class ReturnInstr(Instruction):
         self.name = "Return"
         self.pattern.setFInt("opc", 0x1)
 
-        def code(retReg: str) -> str:
-            return pOP(pRETURN(retReg))
-
-        self.pcode = code
+    def pcode(self, retReg: str = "") -> str:
+        return pOP(pRETURN(retReg))
 
 
 class RTSInstr(ReturnInstr):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
         self.pattern.setFInt("reg", 0x0)
-        self.display = simpleWriter("RTS")
-        self.pcode = lambda: self.pcode("RETS")
+        print(inspect.getsource(self.pcode))
+
+    def display(self) -> str:
+        return "RTS"
+
+    def pcode(self, retReg: str = "RETS") -> str:
+        return super().pcode(retReg)
 
 
 class SyncModeInstr(Instruction):
@@ -59,12 +62,16 @@ class SyncInstr(SyncModeInstr):
 class IdleInstr(SyncInstr):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
-        op = "idle"
-        self.family.addPcodeOp(op)
+        self.op = "idle"
+        self.family.addPcodeOp(self.op)
 
         self.pattern.setFInt("reg", 0x0)
-        self.display = simpleWriter("IDLE")
-        self.pcode = lambda: pOP(pMACRO(op))
+
+    def display(self) -> str:
+        return "IDLE"
+
+    def pcode(self) -> str:
+        return pOP(pMACRO(self.op))
 
 
 class RegInstr(Instruction):
@@ -78,6 +85,7 @@ class DRegInstr(RegInstr):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
         var = Variable(self, self.pattern.getField("regL"), "DREG")
+        self.vars["DReg"] = var
         self.family.addVariable(var)
 
 
@@ -98,11 +106,12 @@ class IMaskInstr(DRegInstr):
 class CliInstr(IMaskInstr):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
-        self.display = simpleWriter("CLI")
 
-        def code() -> str:
-            ops = pOP(pCOPY(pVAR(self.vars["PReg"]), pPTR(IMASK, 4)))
-            ops += pOP(pCOPY(pPTR(IMASK, 4), "0"))
-            return ops
+    def display(self) -> str:
+        return "CLI"
 
-        self.pcode = code
+    def pcode(self) -> str:
+        ops = pOP(pCOPY(pVAR(self.vars["DReg"]), pPTR(IMASK, 4)))
+        ops += pOP(pCOPY(pPTR(IMASK, 4), "0"))
+
+        return ops

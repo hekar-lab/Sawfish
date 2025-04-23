@@ -1,5 +1,5 @@
 from slaspec.const import DEFAULT_MEM
-from slaspec.instructions.vars import Variable
+from slaspec.instructions import Variable
 
 
 def pOP(code: str) -> str:

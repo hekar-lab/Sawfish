@@ -1,4 +1,4 @@
-from instructions.core import Instruction, InstructionFamily16
+from slaspec.instructions import Instruction, InstructionFamily16
 
 
 class NOP16Family(InstructionFamily16):

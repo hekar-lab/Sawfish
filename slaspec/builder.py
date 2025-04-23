@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from slaspec.instructions.core import InstructionFamily16
+from slaspec.instructions import InstructionFamily16
 from slaspec.instructions.instr16.NOP16 import NOP16Family
 from slaspec.instructions.instr16.ProgCtrl import ProgCtrlFamily
 
@@ -55,5 +55,6 @@ class SLASpecBuilder:
                     out += pcode
                     out += "\n}"
 
-            with open(path16, "w") as outfile:
+            path16.parent.mkdir(exist_ok=True, parents=True)
+            with path16.open("w") as outfile:
                 outfile.write(out)
