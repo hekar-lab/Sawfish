@@ -1,9 +1,8 @@
 from slaspec.const import DEFAULT_MEM
-from slaspec.instructions import Variable
 
 
 def pOP(code: str) -> str:
-    return f"\n{code};"
+    return f"\n\t{code};"
 
 
 def pMACRO(macro: str) -> str:
@@ -14,8 +13,8 @@ def pLOCAL(var: str, size: int = 1) -> str:
     return f"local {var}:{size}"
 
 
-def pVAR(var: Variable) -> str:
-    return var.tokenName()
+def pVAR(var: str) -> str:
+    return var
 
 
 def pCOPY(var: str, val: str) -> str:

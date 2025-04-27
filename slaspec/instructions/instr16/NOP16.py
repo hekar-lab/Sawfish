@@ -1,4 +1,5 @@
-from slaspec.instructions import Instruction, InstructionFamily16
+from slaspec.instructions.core import Instruction, InstructionFamily16
+from slaspec.instructions.pattern import FieldTemplate as FT, Mask
 
 
 class NOP16Family(InstructionFamily16):
@@ -8,8 +9,7 @@ class NOP16Family(InstructionFamily16):
         self.desc = "16-bit Slot Nop"
         self.prefix = "nop"
 
-        self.pattern.renameField("x", "sig")
-        self.pattern.setFInt("sig", 0x0000)
+        self.splitField("", [FT("sig", Mask(0x0000), 16)])
 
         # Instruction
         NOPInstrNOP16(self)

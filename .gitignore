@@ -3,3 +3,8 @@ sleigh/
 
 # Python
 __pycache__/
+
+
+# Added by cargo
+
+/target

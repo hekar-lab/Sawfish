@@ -1,8 +1,10 @@
+from math import ceil
 from pathlib import Path
 
-from slaspec.instructions import InstructionFamily16
+from slaspec.instructions.core import InstructionFamily16
 from slaspec.instructions.instr16.NOP16 import NOP16Family
 from slaspec.instructions.instr16.ProgCtrl import ProgCtrlFamily
+from slaspec.instructions.pattern import Mask
 
 
 class SLASpecBuilder:
@@ -10,6 +12,9 @@ class SLASpecBuilder:
         self.path = "blackfinplus.slaspec"
 
         self.instrFam16: list[InstructionFamily16] = [NOP16Family(), ProgCtrlFamily()]
+
+        for fam in self.instrFam16:
+            fam.initTokens()
 
     def build(self, path: Path) -> None:
         sincPath: Path = path.joinpath("includes")
@@ -19,9 +24,12 @@ class SLASpecBuilder:
 
             # Tokens
             tokWord = 16
-            for tokens in instrFam.tokens:
+            for tokens in sorted(list(instrFam.tfam.tsets)):
+                if not tokens:
+                    continue
                 out += f"\ndefine token {instrFam.prefix}Inst{tokWord} (16)"
-                for tok in tokens:
+
+                for tok in sorted(list(tokens)):
                     out += f"\n    {tok.name} = ({tok.start}, {tok.end})"
                     if tok.signed:
                         out += " signed"
@@ -30,9 +38,8 @@ class SLASpecBuilder:
 
             # Variables
             out += "\n"
-            for varList in instrFam.variables.values():
-                for var in varList:
-                    out += f"\nattach variables [{var.tokenName()}] [{var.regvar()}];"
+            for var in instrFam.varAttach:
+                out += f"\nattach variables [{var.name}] [{var.regvar()}];"
 
             # instructions
             out += "\n"
@@ -43,15 +50,28 @@ class SLASpecBuilder:
                 if display:
                     out += f" {display}"
 
+                out += "\n\tis "
+
+                for word in instr.pattern.bits:
+                    for field in word:
+                        out += f"{field.tokenName()}"
+                        if isinstance(field.ftype, Mask):
+                            hexDigits: int = ceil(field.bitrange.len() / 4)
+                            out += f"=0x{{:0{hexDigits}x}}".format(field.ftype.val)
+                        out += " & "
+                    out = out[:-2] + "; "
+                out = out[:-2]
+
+                out += "\n"
                 action = instr.action()
                 if action:
-                    out += " ["
+                    out += "["
                     out += action
-                    out += "\n]"
+                    out += "\n] "
 
                 pcode = instr.pcode()
                 if pcode:
-                    out += " {"
+                    out += "{"
                     out += pcode
                     out += "\n}"
 
