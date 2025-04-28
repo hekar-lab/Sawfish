@@ -1,13 +1,14 @@
 use crate::slaspec::instructions::{
     core::{InstrBuilder, InstrFamilyBuilder},
     pattern::{FieldType, ProtoField, ProtoPattern},
+    util::quote,
 };
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
-        "NOP16",
-        "16-bit Slot Nop",
-        "nop",
+        "ProgCtrl",
+        "Basic Program Sequencer Control Functions",
+        "pgc",
         ProtoPattern {
             fields: vec![
                 ProtoField::new("sig", FieldType::Mask(0x00), 8),
@@ -32,7 +33,7 @@ fn instr_rt(ifam: &InstrFamilyBuilder, retreg: char, regmask: u16) -> InstrBuild
 
     instr.set_field_type("opc", FieldType::Mask(0x01));
     instr.set_field_type("reg", FieldType::Mask(regmask));
-    instr.display = format!("RET{retreg}");
+    instr.display = quote(&format!("RET{retreg}"));
 
     instr
 }

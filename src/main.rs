@@ -1,3 +1,6 @@
+use sawfish::slaspec::builder::SLASpecBuilder;
+
 fn main() {
-    println!("Hello, world! ");
+    let slab = SLASpecBuilder::new();
+    println!("{}", slab.build());
 }

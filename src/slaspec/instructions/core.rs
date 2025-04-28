@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use crate::slaspec::instructions::pattern::Pattern;
 
 use super::{
-    pattern::{FieldType, ProtoPattern},
+    pattern::{Field, FieldType, ProtoPattern},
     util::mask_hex,
 };
 
@@ -29,8 +29,8 @@ impl InstrBuilder {
         }
     }
 
-    pub fn prefix(&self) -> String {
-        self.prefix.clone()
+    pub fn pattern(&self) -> &Pattern {
+        &self.pattern
     }
 
     pub fn set_field_type(&mut self, field_id: &str, ftype: FieldType) {
@@ -95,8 +95,8 @@ pub struct InstrFamilyBuilder {
     prefix: String,
     base_pattern: Pattern,
     instructions: Vec<InstrBuilder>,
-    tokens: HashSet<InstrBuilder>,
-    variables: HashSet<InstrBuilder>,
+    tokens: [HashSet<Field>; 4],
+    variables: HashSet<Field>,
 }
 
 impl InstrFamilyBuilder {
@@ -107,7 +107,12 @@ impl InstrFamilyBuilder {
             prefix: String::from(prefix),
             base_pattern: Pattern::from(base_pattern),
             instructions: Vec::new(),
-            tokens: HashSet::new(),
+            tokens: [
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+            ],
             variables: HashSet::new(),
         }
     }
@@ -119,7 +124,12 @@ impl InstrFamilyBuilder {
             prefix: String::from(prefix),
             base_pattern: Pattern::from(base_pattern),
             instructions: Vec::new(),
-            tokens: HashSet::new(),
+            tokens: [
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+            ],
             variables: HashSet::new(),
         }
     }
@@ -131,33 +141,89 @@ impl InstrFamilyBuilder {
             prefix: String::from(prefix),
             base_pattern: Pattern::from(base_pattern),
             instructions: Vec::new(),
-            tokens: HashSet::new(),
+            tokens: [
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+                HashSet::new(),
+            ],
             variables: HashSet::new(),
         }
-    }
-
-    pub fn prefix(&self) -> String {
-        self.prefix.clone()
     }
 
     pub fn add_instr(&mut self, instr: InstrBuilder) {
         self.instructions.push(instr);
     }
 
-    fn build_instructions(&self) -> String {
-        let mut ifam_str = String::new();
-
+    pub fn init_tokens_and_vars(&mut self) {
         for instr in &self.instructions {
-            ifam_str += &self.name;
-            ifam_str += ":";
-            ifam_str += &instr.build();
-            ifam_str += "\n";
+            for (wi, word) in instr.pattern().fields().iter().enumerate() {
+                for field in word {
+                    if field.is_var() {
+                        self.variables.insert(field.clone());
+                    }
+                    self.tokens[wi].insert(field.clone());
+                }
+            }
+        }
+    }
+
+    fn build_tokens(&self) -> String {
+        let mut tokens_str = String::new();
+
+        for i in 0..4 {
+            if self.tokens[i].is_empty() {
+                continue;
+            }
+            let mut tokens: Vec<Field> = self.tokens[i].clone().into_iter().collect();
+            tokens.sort();
+
+            tokens_str += &format!("define token {}Instr{} (16)\n", self.prefix, (i + 1) * 16);
+            for tok in tokens {
+                tokens_str += &format!(
+                    "\t{} = ({}, {})\n",
+                    tok.token_name(&self),
+                    tok.start(),
+                    tok.end()
+                );
+
+                if tok.is_signed() {
+                    tokens_str += " signed";
+                }
+            }
+            tokens_str += ";\n"
         }
 
-        ifam_str
+        tokens_str
+    }
+
+    fn build_instructions(&self) -> String {
+        let mut instr_str = String::new();
+
+        for instr in &self.instructions {
+            instr_str += &format!("{}{}\n", self.name, instr.build());
+        }
+
+        instr_str
     }
 
     pub fn build(&self) -> String {
-        self.build_instructions()
+        format!("{}{}", self.build_tokens(), self.build_instructions())
+    }
+}
+
+pub trait Prefixed {
+    fn prefix(&self) -> String;
+}
+
+impl Prefixed for &InstrBuilder {
+    fn prefix(&self) -> String {
+        self.prefix.clone()
+    }
+}
+
+impl Prefixed for &InstrFamilyBuilder {
+    fn prefix(&self) -> String {
+        self.prefix.clone()
     }
 }

@@ -1,6 +1,8 @@
-use super::{core::InstrBuilder, util::capitalize};
+use std::hash::Hash;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use super::{core::Prefixed, util::capitalize};
+
+#[derive(Debug, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum RegisterSet {
     DReg,
     DRegL,
@@ -21,7 +23,7 @@ impl RegisterSet {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq, Eq)]
+#[derive(Debug, Default, Clone, Eq, PartialOrd, Ord)]
 pub enum FieldType {
     #[default]
     Blank,
@@ -31,7 +33,25 @@ pub enum FieldType {
     Variable(RegisterSet),
 }
 
-#[derive(Debug, Default, Clone)]
+impl Hash for FieldType {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        if let Self::Variable(v) = self {
+            v.hash(state);
+        }
+        core::mem::discriminant(self).hash(state);
+    }
+}
+
+impl PartialEq for FieldType {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::Variable(l0), Self::Variable(r0)) => l0 == r0,
+            _ => core::mem::discriminant(self) == core::mem::discriminant(other),
+        }
+    }
+}
+
+#[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Ord)]
 pub struct BitRange {
     start: usize,
     end: usize,
@@ -44,6 +64,16 @@ impl BitRange {
 
     fn len(&self) -> usize {
         self.end.saturating_sub(self.start)
+    }
+}
+
+impl PartialOrd for BitRange {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self.start.partial_cmp(&other.start) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        self.len().partial_cmp(&other.len())
     }
 }
 
@@ -87,7 +117,7 @@ impl ProtoPattern {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Hash, PartialEq, Eq, Ord)]
 pub struct Field {
     id: String,
     ftype: FieldType,
@@ -116,14 +146,18 @@ impl Field {
     }
 
     pub fn is_signed(&self) -> bool {
-        if self.ftype == FieldType::SImmVal {
+        self.ftype == FieldType::SImmVal
+    }
+
+    pub fn is_var(&self) -> bool {
+        if let FieldType::Variable(_) = self.ftype {
             return true;
         }
 
         false
     }
 
-    pub fn token_name(&self, instr: &InstrBuilder) -> String {
+    pub fn token_name<I: Prefixed>(&self, instr: &I) -> String {
         let suffix = match &self.ftype {
             FieldType::Variable(regset) => regset.name(),
             FieldType::UImmVal => String::from("UImm"),
@@ -135,7 +169,21 @@ impl Field {
     }
 }
 
-#[derive(Debug, Clone)]
+impl PartialOrd for Field {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        match self.bit_range.partial_cmp(&other.bit_range) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        match self.id.partial_cmp(&other.id) {
+            Some(core::cmp::Ordering::Equal) => {}
+            ord => return ord,
+        }
+        self.ftype.partial_cmp(&other.ftype)
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub struct Pattern {
     fields: [Vec<Field>; 4],
 }
