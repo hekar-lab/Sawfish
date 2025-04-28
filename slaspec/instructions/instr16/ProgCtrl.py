@@ -17,11 +17,17 @@ class ProgCtrlFamily(InstructionFamily16):
         # self.pcodeops = ["idle", "csync", "ssync", "emuexcpt", "raise", "excpt"]
 
         # Instructions
-        RTSInstr(self)
+        retChars = "SIXNE"
+        for i, c in enumerate(retChars):
+            RTInstr(self, c, i)
         IdleInstr(self)
+        CSyncInstr(self)
+        SSyncInstr(self)
+        ModeInstr(self)
         CliInstr(self)
 
 
+# Return instructions
 class ReturnInstr(Instruction):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
@@ -32,18 +38,21 @@ class ReturnInstr(Instruction):
         return pOP(pRETURN(retReg))
 
 
-class RTSInstr(ReturnInstr):
-    def __init__(self, family: ProgCtrlFamily) -> None:
+class RTInstr(ReturnInstr):
+    def __init__(self, family: ProgCtrlFamily, ret: str, mask: int) -> None:
         super().__init__(family)
-        self.setFieldType("reg", Mask(0x00))
+        self.ret = ret
+        self.setFieldType("reg", Mask(mask))
 
     def display(self) -> str:
-        return '"RTS"'
+        return f'"RT{self.ret}"'
 
-    def pcode(self, retReg: str = "RETS") -> str:
+    def pcode(self, retReg: str = "RET") -> str:
+        retReg += self.ret
         return super().pcode(retReg)
 
 
+# SyncMode instructions
 class SyncModeInstr(Instruction):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
@@ -71,6 +80,53 @@ class IdleInstr(SyncInstr):
         return pOP(pMACRO(self.op))
 
 
+class CSyncInstr(SyncInstr):
+    def __init__(self, family: ProgCtrlFamily) -> None:
+        super().__init__(family)
+        self.op = "csync"
+        self.family.addPcodeOp(self.op)
+
+        self.setFieldType("reg", Mask(0x03))
+
+    def display(self) -> str:
+        return '"CSYNC"'
+
+    def pcode(self) -> str:
+        return pOP(pMACRO(self.op))
+
+
+class SSyncInstr(SyncInstr):
+    def __init__(self, family: ProgCtrlFamily) -> None:
+        super().__init__(family)
+        self.op = "sync"
+        self.family.addPcodeOp(self.op)
+
+        self.setFieldType("reg", Mask(0x04))
+
+    def display(self) -> str:
+        return '"SSCYNC"'
+
+    def pcode(self) -> str:
+        return pOP(pMACRO(self.op))
+
+
+class ModeInstr(SyncModeInstr):
+    def __init__(self, family: ProgCtrlFamily) -> None:
+        super().__init__(family)
+        self.name = "Mode"
+        self.op = "emuexcpt"
+        self.family.addPcodeOp(self.op)
+
+        self.setFieldType("reg", Mask(0x05))
+
+    def display(self) -> str:
+        return '"EMUEXCPT"'
+
+    def pcode(self) -> str:
+        return pOP(pMACRO(self.op))
+
+
+# Register instructions
 class RegInstr(Instruction):
     def __init__(self, family: ProgCtrlFamily) -> None:
         super().__init__(family)
