@@ -1,5 +1,7 @@
-pub mod core;
-pub mod pattern;
-pub mod util;
+mod pattern;
+mod pcode;
+mod text;
+mod util;
 
+pub mod core;
 pub mod instr16;

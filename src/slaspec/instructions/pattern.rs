@@ -63,7 +63,7 @@ impl BitRange {
     }
 
     fn len(&self) -> usize {
-        self.end.saturating_sub(self.start)
+        self.end.saturating_sub(self.start) + 1
     }
 }
 

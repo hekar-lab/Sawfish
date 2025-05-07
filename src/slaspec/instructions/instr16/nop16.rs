@@ -1,5 +1,5 @@
 use crate::slaspec::instructions::{
-    core::{InstrBuilder, InstrFamilyBuilder},
+    core::{InstrBuilder, InstrFactory, InstrFamilyBuilder},
     pattern::{FieldType, ProtoField, ProtoPattern},
 };
 
@@ -13,11 +13,15 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         },
     );
 
-    ifam.add_instr(instr_nop(&ifam));
+    ifam.add_instrs(&NOPFactory());
 
     ifam
 }
 
-fn instr_nop(ifam: &InstrFamilyBuilder) -> InstrBuilder {
-    InstrBuilder::new("NOP", ifam)
+struct NOPFactory();
+
+impl InstrFactory for NOPFactory {
+    fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
+        vec![InstrBuilder::new(ifam).name("NOP")]
+    }
 }

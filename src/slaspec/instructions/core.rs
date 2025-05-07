@@ -4,6 +4,7 @@ use crate::slaspec::instructions::pattern::Pattern;
 
 use super::{
     pattern::{Field, FieldType, ProtoPattern},
+    text::Text,
     util::mask_hex,
 };
 
@@ -12,20 +13,20 @@ pub struct InstrBuilder {
     pattern: Pattern,
     prefix: String,
     name: String,
-    pub display: String,
-    action: String,
-    pcode: String,
+    display: Text,
+    action: Text,
+    pcode: Text,
 }
 
 impl InstrBuilder {
-    pub fn new(name: &str, ifam: &InstrFamilyBuilder) -> Self {
+    pub fn new(ifam: &InstrFamilyBuilder) -> Self {
         InstrBuilder {
             pattern: ifam.base_pattern.clone(),
-            name: String::from(name),
+            name: String::new(),
             prefix: ifam.prefix(),
-            display: String::new(),
-            action: String::new(),
-            pcode: String::new(),
+            display: Text::new(),
+            action: Text::new(),
+            pcode: Text::new(),
         }
     }
 
@@ -33,12 +34,34 @@ impl InstrBuilder {
         &self.pattern
     }
 
-    pub fn set_field_type(&mut self, field_id: &str, ftype: FieldType) {
-        self.pattern = self.pattern.clone().set_field_type(field_id, ftype);
+    pub fn name(mut self, name: &str) -> Self {
+        self.name = String::from(name);
+        self
     }
 
-    pub fn split_field(&mut self, field_id: &str, split: ProtoPattern) {
+    pub fn display(mut self, display: Text) -> Self {
+        self.display = display;
+        self
+    }
+
+    pub fn action(mut self, action: Text) -> Self {
+        self.action = action;
+        self
+    }
+
+    pub fn pcode(mut self, pcode: Text) -> Self {
+        self.pcode = pcode;
+        self
+    }
+
+    pub fn set_field_type(mut self, field_id: &str, ftype: FieldType) -> Self {
+        self.pattern = self.pattern.clone().set_field_type(field_id, ftype);
+        self
+    }
+
+    pub fn split_field(mut self, field_id: &str, split: ProtoPattern) -> Self {
         self.pattern = self.pattern.clone().split_field(field_id, split);
+        self
     }
 
     fn build_name(&self) -> String {
@@ -70,18 +93,22 @@ impl InstrBuilder {
         if self.action.is_empty() {
             return String::new();
         }
-        format!("\n[{}\n]", self.action)
+        format!("\n[{}\n]", self.action.generate(&self))
     }
 
     fn build_pcode(&self) -> String {
-        format!("\n{{{}\n}}", self.pcode)
+        if self.pcode.is_empty() {
+            return String::from("{}");
+        }
+        let nl = if self.action.is_empty() { "\n" } else { " " };
+        format!("{}{{{}\n}}", nl, self.pcode.generate(&self))
     }
 
     pub fn build(&self) -> String {
         format!(
             "{} {}{}{}{}",
             self.build_name(),
-            self.display,
+            self.display.generate(&self),
             self.build_pattern(),
             self.build_action(),
             self.build_pcode()
@@ -97,6 +124,7 @@ pub struct InstrFamilyBuilder {
     instructions: Vec<InstrBuilder>,
     tokens: [HashSet<Field>; 4],
     variables: HashSet<Field>,
+    pcodeops: Vec<String>,
 }
 
 impl InstrFamilyBuilder {
@@ -114,6 +142,7 @@ impl InstrFamilyBuilder {
                 HashSet::new(),
             ],
             variables: HashSet::new(),
+            pcodeops: Vec::new(),
         }
     }
 
@@ -131,6 +160,7 @@ impl InstrFamilyBuilder {
                 HashSet::new(),
             ],
             variables: HashSet::new(),
+            pcodeops: Vec::new(),
         }
     }
 
@@ -148,11 +178,16 @@ impl InstrFamilyBuilder {
                 HashSet::new(),
             ],
             variables: HashSet::new(),
+            pcodeops: Vec::new(),
         }
     }
 
-    pub fn add_instr(&mut self, instr: InstrBuilder) {
-        self.instructions.push(instr);
+    pub fn add_pcodeop(&mut self, pcodeop: &str) {
+        self.pcodeops.push(String::from(pcodeop));
+    }
+
+    pub fn add_instrs<Factory: InstrFactory>(&mut self, factory: &Factory) {
+        self.instructions.append(&mut factory.build_instrs(&self));
     }
 
     pub fn init_tokens_and_vars(&mut self) {
@@ -226,4 +261,8 @@ impl Prefixed for &InstrFamilyBuilder {
     fn prefix(&self) -> String {
         self.prefix.clone()
     }
+}
+
+pub trait InstrFactory {
+    fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder>;
 }
