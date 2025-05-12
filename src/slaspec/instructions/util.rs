@@ -6,10 +6,6 @@ pub fn capitalize(s: &str) -> String {
     }
 }
 
-pub fn quote(s: &str) -> String {
-    format!("\"{s}\"")
-}
-
 pub fn mask_hex(val: u16, len: usize) -> String {
     let mut hex_len = ((len as f32) / 4.0).ceil() as usize;
     hex_len += 2; // Add 2 to account for the "0x"

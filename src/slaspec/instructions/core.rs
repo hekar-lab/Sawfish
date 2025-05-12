@@ -1,10 +1,11 @@
 use std::collections::HashSet;
 
-use crate::slaspec::instructions::pattern::Pattern;
+use crate::slaspec::instructions::{format::display_format, pattern::Pattern};
 
 use super::{
+    expr::{Code, Expr},
+    format::code_format,
     pattern::{Field, FieldType, ProtoPattern},
-    text::Text,
     util::mask_hex,
 };
 
@@ -13,9 +14,9 @@ pub struct InstrBuilder {
     pattern: Pattern,
     prefix: String,
     name: String,
-    display: Text,
-    action: Text,
-    pcode: Text,
+    display: String,
+    actions: Code,
+    pcodes: Code,
 }
 
 impl InstrBuilder {
@@ -24,9 +25,9 @@ impl InstrBuilder {
             pattern: ifam.base_pattern.clone(),
             name: String::new(),
             prefix: ifam.prefix(),
-            display: Text::new(),
-            action: Text::new(),
-            pcode: Text::new(),
+            display: String::new(),
+            actions: Code::new(),
+            pcodes: Code::new(),
         }
     }
 
@@ -39,18 +40,18 @@ impl InstrBuilder {
         self
     }
 
-    pub fn display(mut self, display: Text) -> Self {
+    pub fn display(mut self, display: String) -> Self {
         self.display = display;
         self
     }
 
-    pub fn action(mut self, action: Text) -> Self {
-        self.action = action;
+    pub fn add_action(mut self, action: Expr) -> Self {
+        self.actions.add_expr(action);
         self
     }
 
-    pub fn pcode(mut self, pcode: Text) -> Self {
-        self.pcode = pcode;
+    pub fn add_pcode(mut self, pcode: Expr) -> Self {
+        self.pcodes.add_expr(pcode);
         self
     }
 
@@ -73,8 +74,8 @@ impl InstrBuilder {
 
         let words = self.pattern.fields();
         for word in words {
-            for field in word {
-                pattern_str += &field.token_name(&self);
+            for field in word.iter().rev() {
+                pattern_str += &field.token_name(&self.prefix);
                 if let FieldType::Mask(val) = field.ftype() {
                     pattern_str += "=";
                     pattern_str += &mask_hex(val, field.len());
@@ -90,25 +91,43 @@ impl InstrBuilder {
     }
 
     fn build_action(&self) -> String {
-        if self.action.is_empty() {
-            return String::new();
+        let mut actions = String::new();
+
+        if self.actions.is_empty() {
+            return actions;
         }
-        format!("\n[{}\n]", self.action.generate(&self))
+
+        // for act in &self.actions {
+        //     actions += &format!("\n\t{};", code_format(act, &self.pattern, &self.prefix))
+        // }
+
+        actions += &self.actions.build(&self.pattern, &self.prefix);
+
+        format!("\n[{}\n]", actions)
     }
 
     fn build_pcode(&self) -> String {
-        if self.pcode.is_empty() {
+        if self.pcodes.is_empty() {
             return String::from("{}");
         }
-        let nl = if self.action.is_empty() { "\n" } else { " " };
-        format!("{}{{{}\n}}", nl, self.pcode.generate(&self))
+
+        let mut pcodes = String::new();
+        let nl = if self.actions.is_empty() { "\n" } else { " " };
+
+        // for pc in &self.pcodes {
+        //     pcodes += &format!("\n\t{};", code_format(pc, &self.pattern, &self.prefix))
+        // }
+
+        pcodes += &self.pcodes.build(&self.pattern, &self.prefix);
+
+        format!("{}{{{}\n}}", nl, pcodes)
     }
 
     pub fn build(&self) -> String {
         format!(
             "{} {}{}{}{}",
             self.build_name(),
-            self.display.generate(&self),
+            display_format(&self.display, &self.pattern, &self.prefix),
             self.build_pattern(),
             self.build_action(),
             self.build_pcode()
@@ -212,12 +231,13 @@ impl InstrFamilyBuilder {
             }
             let mut tokens: Vec<Field> = self.tokens[i].clone().into_iter().collect();
             tokens.sort();
+            tokens.reverse();
 
             tokens_str += &format!("define token {}Instr{} (16)\n", self.prefix, (i + 1) * 16);
             for tok in tokens {
                 tokens_str += &format!(
                     "\t{} = ({}, {})\n",
-                    tok.token_name(&self),
+                    tok.token_name(&self.prefix),
                     tok.start(),
                     tok.end()
                 );

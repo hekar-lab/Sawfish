@@ -1,6 +1,6 @@
 use std::hash::Hash;
 
-use super::{core::Prefixed, util::capitalize};
+use super::util::capitalize;
 
 #[derive(Debug, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum RegisterSet {
@@ -12,7 +12,10 @@ pub enum RegisterSet {
 impl RegisterSet {
     pub fn name(&self) -> String {
         match self {
-            _ => String::new(),
+            Self::DReg => String::from("DReg"),
+            Self::DRegL => String::from("DRegL"),
+            Self::PReg => String::from("PReg"),
+            // _ => String::new(),
         }
     }
 
@@ -69,7 +72,7 @@ impl BitRange {
 
 impl PartialOrd for BitRange {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        match self.start.partial_cmp(&other.start) {
+        match self.end.partial_cmp(&other.end) {
             Some(core::cmp::Ordering::Equal) => {}
             ord => return ord,
         }
@@ -108,6 +111,10 @@ pub struct ProtoPattern {
 }
 
 impl ProtoPattern {
+    pub fn new(fields: Vec<ProtoField>) -> Self {
+        ProtoPattern { fields }
+    }
+
     pub fn len(&self) -> usize {
         self.fields.iter().map(|f| f.size).sum()
     }
@@ -157,7 +164,7 @@ impl Field {
         false
     }
 
-    pub fn token_name<I: Prefixed>(&self, instr: &I) -> String {
+    pub fn name(&self) -> String {
         let suffix = match &self.ftype {
             FieldType::Variable(regset) => regset.name(),
             FieldType::UImmVal => String::from("UImm"),
@@ -165,7 +172,11 @@ impl Field {
             _ => String::new(),
         };
 
-        format!("{}{}{}", instr.prefix(), capitalize(&self.id), suffix)
+        format!("{}{}", capitalize(&self.id), suffix)
+    }
+
+    pub fn token_name(&self, fam_prefix: &str) -> String {
+        format!("{}{}", fam_prefix, self.name())
     }
 }
 
@@ -177,9 +188,15 @@ impl PartialOrd for Field {
         }
         match self.id.partial_cmp(&other.id) {
             Some(core::cmp::Ordering::Equal) => {}
-            ord => return ord,
+            ord => match ord {
+                Some(o) => return Some(o.reverse()),
+                None => return None,
+            },
         }
-        self.ftype.partial_cmp(&other.ftype)
+        match self.ftype.partial_cmp(&other.ftype) {
+            Some(o) => Some(o.reverse()),
+            None => None,
+        }
     }
 }
 
@@ -205,13 +222,13 @@ impl Pattern {
         None
     }
 
-    // fn get_field(&self, field_id: &str) -> Option<Field> {
-    //     if let Some(i) = self.get_field_index(field_id) {
-    //         return Some(self.fields[i].to_owned());
-    //     }
+    pub fn get_field(&self, field_id: &str) -> Option<Field> {
+        if let Some((wi, fi)) = self.get_field_index(field_id) {
+            return Some(self.fields[wi][fi].to_owned());
+        }
 
-    //     None
-    // }
+        None
+    }
 
     // fn set_field_id(mut self, old_id: &str, new_id: &str) -> Self {
     //     if let Some(i) = self.get_field_index(old_id) {
@@ -257,7 +274,7 @@ impl From<ProtoPattern> for Pattern {
         let mut fields = Vec::new();
         let mut start: usize = 0;
 
-        for pfield in &value.fields {
+        for pfield in value.fields.iter().rev() {
             fields.push(pfield.to_field(start));
             start += pfield.size;
         }
@@ -275,7 +292,7 @@ impl From<[ProtoPattern; 2]> for Pattern {
 
         for word in value {
             let mut start: usize = 0;
-            for pfield in &word.fields {
+            for pfield in word.fields.iter().rev() {
                 fields[word_index].push(pfield.to_field(start));
                 start += pfield.size;
             }
@@ -292,8 +309,8 @@ impl From<[ProtoPattern; 4]> for Pattern {
         let mut word_index: usize = 0;
 
         for word in value {
-            let mut start: usize = 0;
-            for pfield in &word.fields {
+            let mut start: usize = word.len() - 1;
+            for pfield in word.fields.iter().rev() {
                 fields[word_index].push(pfield.to_field(start));
                 start += pfield.size;
             }

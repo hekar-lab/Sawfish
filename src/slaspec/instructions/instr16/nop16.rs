@@ -8,9 +8,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         "NOP16",
         "16-bit Slot Nop",
         "nop",
-        ProtoPattern {
-            fields: vec![ProtoField::new("sig", FieldType::Mask(0x0000), 16)],
-        },
+        ProtoPattern::new(vec![ProtoField::new("sig", FieldType::Mask(0x0000), 16)]),
     );
 
     ifam.add_instrs(&NOPFactory());

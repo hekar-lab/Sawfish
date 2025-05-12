@@ -1,31 +1,29 @@
 use crate::slaspec::globals::DEFAULT_MEM;
 
-use super::text::Text;
-
-pub fn p_op(code: Text) -> Text {
-    "\n\t" + code + ";"
+pub fn p_field(field: String) -> String {
+    format!("{{{field}}}")
 }
 
-pub fn p_macro(mac: &str) -> Text {
-    Text::from(format!("{mac}()"))
+pub fn p_macro(mac: String) -> String {
+    format!("{mac}()")
 }
 
-pub fn p_local(var: Text, size: usize) -> Text {
-    "local " + var + format!(":{size}")
+pub fn p_local(var: String, size: usize) -> String {
+    format!("local {var}:{size}")
 }
 
-pub fn p_copy(dst: Text, src: Text) -> Text {
-    dst + " = " + src
+pub fn p_copy(dst: String, src: String) -> String {
+    format!("{dst} = {src}")
 }
 
-pub fn p_ptr(size: usize, addr: Text) -> Text {
+pub fn p_ptr(size: usize, addr: String) -> String {
     p_ptr_mem(DEFAULT_MEM, size, addr)
 }
 
-pub fn p_ptr_mem(mem: &str, size: usize, addr: Text) -> Text {
-    format!("*[{mem}]:{size} ") + addr
+pub fn p_ptr_mem(mem: &str, size: usize, addr: String) -> String {
+    format!("*[{mem}]:{size} {addr}")
 }
 
-pub fn p_return(addr: Text) -> Text {
-    "return [" + addr + "]"
+pub fn p_return(addr: String) -> String {
+    format!("return [{}]", addr)
 }
