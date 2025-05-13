@@ -3,6 +3,7 @@ use crate::slaspec::{
     instructions::{
         core::{InstrBuilder, InstrFactory, InstrFamilyBuilder},
         expr::Expr,
+        expr_util::{e_add, e_bit_or, e_copy, e_ne},
         pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet},
     },
 };
@@ -29,9 +30,9 @@ pub fn instr_fam() -> InstrFamilyBuilder {
     ifam.add_instrs(&IMaskFactory());
     ifam.add_instrs(&JumpFactory());
     ifam.add_instrs(&CallFactory());
+    ifam.add_instrs(&RaiseFactory());
     ifam.add_instrs(&TestSetFactory());
     ifam.add_instrs(&SyncFactory());
-    ifam.add_instrs(&RaiseFactory());
 
     ifam
 }
@@ -45,7 +46,7 @@ impl ReturnFactory {
             .set_field_type("reg", FieldType::Mask(regmask))
             .name("Return")
             .display(format!("RT{retreg}"))
-            .add_pcode(Expr::ret(Expr::var(&format!("RET{retreg}"))))
+            .add_pcode(Expr::ret(Expr::reg(&format!("RET{retreg}"))))
     }
 }
 
@@ -116,7 +117,7 @@ impl IMaskFactory {
         reg_instr(InstrBuilder::new(ifam))
             .name("IMaskMv")
             .set_field_type("regL", FieldType::Variable(RegisterSet::DReg))
-            .add_pcode(Expr::copy(
+            .add_pcode(e_copy(
                 Expr::local(Expr::var(IMaskFactory::IMASK_VAR), 4),
                 Expr::var(IMASK),
             ))
@@ -129,18 +130,18 @@ impl InstrFactory for IMaskFactory {
             IMaskFactory::base_instr(ifam)
                 .set_field_type("opc", FieldType::Mask(0x3))
                 .display("CLI {regL}".to_string())
-                .add_pcode(Expr::copy(
+                .add_pcode(e_copy(
                     Expr::field("regL"),
                     Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
                 ))
-                .add_pcode(Expr::copy(
+                .add_pcode(e_copy(
                     Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
                     Expr::num(0),
                 )),
             IMaskFactory::base_instr(ifam)
                 .set_field_type("opc", FieldType::Mask(0x4))
                 .display("STI {regL}".to_string())
-                .add_pcode(Expr::copy(
+                .add_pcode(e_copy(
                     Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
                     Expr::field("regL"),
                 )),
@@ -161,7 +162,7 @@ impl JumpFactory {
             .name("Jump")
             .display(format!("JUMP ({}{{regL}})", if pc { "PC + " } else { "" }))
             .add_pcode(Expr::goto(Expr::addr(if pc {
-                Expr::add(Expr::field("regL"), Expr::var("PC"))
+                e_add(Expr::field("regL"), Expr::reg("PC"))
             } else {
                 Expr::field("regL")
             })))
@@ -184,9 +185,9 @@ impl CallFactory {
         goto_instr(ifam)
             .name("Call")
             .display(format!("CALL ({}{{regL}})", if pc { "PC + " } else { "" }))
-            .add_pcode(Expr::copy(Expr::var("RETS"), Expr::var("instr_next")))
+            .add_pcode(e_copy(Expr::reg("RETS"), Expr::var("instr_next")))
             .add_pcode(Expr::call(if pc {
-                Expr::add(Expr::field("regL"), Expr::var("PC"))
+                e_add(Expr::field("regL"), Expr::reg("PC"))
             } else {
                 Expr::field("regL")
             }))
@@ -233,21 +234,21 @@ impl InstrFactory for TestSetFactory {
                 .set_field_type("regL", FieldType::Variable(RegisterSet::PReg))
                 .set_field_type("opc", FieldType::Mask(0xb))
                 .name("TestSet")
-                .display(format!("TESTSET ({{regL}})"))
-                .add_pcode(Expr::copy(
+                .display("TESTSET ({regL})".to_string())
+                .add_pcode(e_copy(
                     Expr::local(Expr::var("testVal"), 1),
                     Expr::ptr(Expr::field("regL"), 1),
                 ))
-                .add_pcode(Expr::copy(Expr::var("CC"), Expr::num(0x0)))
+                .add_pcode(e_copy(Expr::reg("CC"), Expr::num(0x0)))
                 .add_pcode(Expr::ifgoto(
-                    Expr::ne(Expr::var("testVal"), Expr::num(0x0)),
+                    e_ne(Expr::var("testVal"), Expr::num(0x0)),
                     Expr::label("is_set"),
                 ))
-                .add_pcode(Expr::copy(Expr::var("CC"), Expr::num(0x1)))
+                .add_pcode(e_copy(Expr::reg("CC"), Expr::num(0x1)))
                 .add_pcode(Expr::label("is_set"))
-                .add_pcode(Expr::copy(
+                .add_pcode(e_copy(
                     Expr::ptr(Expr::field("regL"), 1),
-                    Expr::bit_or(Expr::var("testVal"), Expr::num(0x80)),
+                    e_bit_or(Expr::var("testVal"), Expr::num(0x80)),
                 )),
         ]
     }
@@ -262,12 +263,12 @@ impl InstrFactory for SyncFactory {
                 .set_field_type("regL", FieldType::Variable(RegisterSet::DReg))
                 .set_field_type("opc", FieldType::Mask(0xc))
                 .name("Sync")
-                .display(format!("STI IDLE {{regL}}"))
-                .add_pcode(Expr::copy(
+                .display("STI IDLE {regL}".to_string())
+                .add_pcode(e_copy(
                     Expr::local(Expr::var(IMaskFactory::IMASK_VAR), 4),
                     Expr::var(IMASK),
                 ))
-                .add_pcode(Expr::copy(
+                .add_pcode(e_copy(
                     Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
                     Expr::field("regL"),
                 ))

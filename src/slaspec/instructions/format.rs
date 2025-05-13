@@ -144,25 +144,3 @@ pub fn display_format(txt: &str, pattern: &Pattern, prefix: &str) -> String {
 
     out
 }
-
-pub fn code_format(txt: &str, pattern: &Pattern, prefix: &str) -> String {
-    let mut scanner = Scanner::new(txt);
-    let tokens = scanner.scan();
-    let mut out = String::new();
-
-    for tok in tokens {
-        match &tok {
-            Token::Literal(s) => out += &s,
-            Token::Variable(_) => {
-                panic!("Variable don't work in code part (i.e. disassembly aciton and pcode)")
-            }
-            Token::Field(s) => {
-                if let Some(f) = pattern.get_field(s) {
-                    out += &format!("{}{}", prefix, f.name())
-                }
-            }
-        }
-    }
-
-    out
-}

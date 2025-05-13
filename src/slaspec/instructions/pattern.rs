@@ -7,6 +7,12 @@ pub enum RegisterSet {
     DReg,
     DRegL,
     PReg,
+    IReg,
+    MReg,
+    BReg,
+    LReg,
+    SyRg2,
+    SyRg3,
 }
 
 impl RegisterSet {
@@ -15,7 +21,12 @@ impl RegisterSet {
             Self::DReg => String::from("DReg"),
             Self::DRegL => String::from("DRegL"),
             Self::PReg => String::from("PReg"),
-            // _ => String::new(),
+            Self::IReg => String::from("IReg"),
+            Self::MReg => String::from("MReg"),
+            Self::BReg => String::from("BReg"),
+            Self::LReg => String::from("LReg"),
+            Self::SyRg2 => String::from("SyRg2"),
+            Self::SyRg3 => String::from("SyRg3"),
         }
     }
 
@@ -188,10 +199,8 @@ impl PartialOrd for Field {
         }
         match self.id.partial_cmp(&other.id) {
             Some(core::cmp::Ordering::Equal) => {}
-            ord => match ord {
-                Some(o) => return Some(o.reverse()),
-                None => return None,
-            },
+            Some(o) => return Some(o.reverse()),
+            None => return None,
         }
         match self.ftype.partial_cmp(&other.ftype) {
             Some(o) => Some(o.reverse()),
@@ -251,6 +260,7 @@ impl Pattern {
             let field = &self.fields[wi][fi];
 
             if field.len() != split.len() {
+                println!("WARNING: Length are not matching for field splitting");
                 return self;
             }
 

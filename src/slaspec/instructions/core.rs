@@ -4,7 +4,6 @@ use crate::slaspec::instructions::{format::display_format, pattern::Pattern};
 
 use super::{
     expr::{Code, Expr},
-    format::code_format,
     pattern::{Field, FieldType, ProtoPattern},
     util::mask_hex,
 };
@@ -236,7 +235,7 @@ impl InstrFamilyBuilder {
             tokens_str += &format!("define token {}Instr{} (16)\n", self.prefix, (i + 1) * 16);
             for tok in tokens {
                 tokens_str += &format!(
-                    "\t{} = ({}, {})\n",
+                    "\t{} =\t({:2},{:2})\n",
                     tok.token_name(&self.prefix),
                     tok.start(),
                     tok.end()

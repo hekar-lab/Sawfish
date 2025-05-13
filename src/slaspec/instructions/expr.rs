@@ -1,6 +1,6 @@
 use crate::slaspec::globals::DEFAULT_MEM;
 
-use super::pattern::{Pattern, RegisterSet};
+use super::pattern::Pattern;
 
 #[derive(Debug, Clone)]
 pub enum Op {
@@ -31,6 +31,11 @@ impl Op {
 
 #[derive(Debug, Clone)]
 pub enum Expr {
+    Line {
+        current: Box<Expr>,
+        next: Option<Box<Expr>>,
+    },
+
     Field {
         id: String,
     },
@@ -38,8 +43,7 @@ pub enum Expr {
         id: String,
     },
     Reg {
-        regset: RegisterSet,
-        index: usize,
+        id: String,
     },
     Number {
         val: isize,
@@ -92,12 +96,27 @@ pub enum Expr {
 }
 
 impl Expr {
+    pub fn line(current: Expr, next: Option<Expr>) -> Expr {
+        Expr::Line {
+            current: Box::new(current),
+            next: if let Some(ex) = next {
+                Some(Box::new(ex))
+            } else {
+                None
+            },
+        }
+    }
+
     pub fn field(id: &str) -> Expr {
         Expr::Field { id: id.to_string() }
     }
 
     pub fn var(id: &str) -> Expr {
         Expr::Var { id: id.to_string() }
+    }
+
+    pub fn reg(id: &str) -> Expr {
+        Expr::Reg { id: id.to_string() }
     }
 
     pub fn trunc(var: Expr, size: usize) -> Expr {
@@ -140,34 +159,10 @@ impl Expr {
         }
     }
 
-    pub fn copy(dst: Expr, src: Expr) -> Expr {
-        Expr::Binary {
-            lhs: Box::new(dst),
-            op: Op::Copy,
-            rhs: Box::new(src),
-        }
-    }
-
-    pub fn add(lhs: Expr, rhs: Expr) -> Expr {
+    pub fn bin(lhs: Expr, op: Op, rhs: Expr) -> Expr {
         Expr::Binary {
             lhs: Box::new(lhs),
-            op: Op::Plus,
-            rhs: Box::new(rhs),
-        }
-    }
-
-    pub fn bit_or(lhs: Expr, rhs: Expr) -> Expr {
-        Expr::Binary {
-            lhs: Box::new(lhs),
-            op: Op::BitOr,
-            rhs: Box::new(rhs),
-        }
-    }
-
-    pub fn ne(lhs: Expr, rhs: Expr) -> Expr {
-        Expr::Binary {
-            lhs: Box::new(lhs),
-            op: Op::NE,
+            op: op,
             rhs: Box::new(rhs),
         }
     }
@@ -212,12 +207,27 @@ impl Expr {
 
     pub fn build(&self, pattern: &Pattern, prefix: &str) -> String {
         match self {
+            Expr::Line { current, next } => {
+                return format!(
+                    "{}{}",
+                    match &**current {
+                        Expr::Label { id: _ } => format!("\n{}", current.build(pattern, prefix)),
+                        _ => format!("\n\t{};", current.build(pattern, prefix)),
+                    },
+                    if let Some(line) = next {
+                        line.build(pattern, prefix)
+                    } else {
+                        "".to_string()
+                    }
+                );
+            }
             Expr::Field { id } => {
                 if let Some(f) = pattern.get_field(id) {
                     return format!("{}{}", prefix, f.name());
                 }
             }
             Expr::Var { id } => return id.clone(),
+            Expr::Reg { id } => return id.clone(),
             Expr::Number { val } => return format!("{val:#0x}"),
             Expr::Macro { id, param } => {
                 if let Some(e) = param {
@@ -295,6 +305,10 @@ impl Code {
         for ex in &self.exprs {
             match ex {
                 Expr::Label { id: _ } => out += &format!("\n{}", ex.build(pattern, prefix)),
+                Expr::Line {
+                    current: _,
+                    next: _,
+                } => out += &ex.build(pattern, prefix),
                 _ => out += &format!("\n\t{};", ex.build(pattern, prefix)),
             }
         }

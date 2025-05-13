@@ -1,6 +1,6 @@
 use super::instructions::core::InstrFamilyBuilder;
 
-use super::instructions::instr16::{nop16, progctrl};
+use super::instructions::instr16::{nop16, progctrl, pushpopreg};
 
 pub struct SLASpecBuilder {
     ifams: Vec<InstrFamilyBuilder>,
@@ -8,7 +8,11 @@ pub struct SLASpecBuilder {
 
 impl SLASpecBuilder {
     pub fn new() -> Self {
-        let mut ifams = vec![nop16::instr_fam(), progctrl::instr_fam()];
+        let mut ifams = vec![
+            nop16::instr_fam(),
+            progctrl::instr_fam(),
+            pushpopreg::instr_fam(),
+        ];
 
         for ifam in ifams.iter_mut() {
             ifam.init_tokens_and_vars();
