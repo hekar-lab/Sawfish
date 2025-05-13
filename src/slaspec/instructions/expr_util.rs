@@ -1,47 +1,29 @@
-use super::{
-    core::InstrBuilder,
-    expr::{Expr, Op},
-};
+use super::expr::{Expr, Op};
+
+// Unary operations
+pub fn e_not(expr: Expr) -> Expr {
+    Expr::un(Op::Bang, expr)
+}
 
 // Binary operations
 pub fn e_copy(dst: Expr, src: Expr) -> Expr {
-    Expr::Binary {
-        lhs: Box::new(dst),
-        op: Op::Copy,
-        rhs: Box::new(src),
-    }
+    Expr::bin(dst, Op::Copy, src)
 }
 
 pub fn e_add(lhs: Expr, rhs: Expr) -> Expr {
-    Expr::Binary {
-        lhs: Box::new(lhs),
-        op: Op::Plus,
-        rhs: Box::new(rhs),
-    }
+    Expr::bin(lhs, Op::Plus, rhs)
 }
 
 pub fn e_sub(lhs: Expr, rhs: Expr) -> Expr {
-    Expr::Binary {
-        lhs: Box::new(lhs),
-        op: Op::Minus,
-        rhs: Box::new(rhs),
-    }
+    Expr::bin(lhs, Op::Minus, rhs)
 }
 
 pub fn e_bit_or(lhs: Expr, rhs: Expr) -> Expr {
-    Expr::Binary {
-        lhs: Box::new(lhs),
-        op: Op::BitOr,
-        rhs: Box::new(rhs),
-    }
+    Expr::bin(lhs, Op::BitOr, rhs)
 }
 
 pub fn e_ne(lhs: Expr, rhs: Expr) -> Expr {
-    Expr::Binary {
-        lhs: Box::new(lhs),
-        op: Op::NE,
-        rhs: Box::new(rhs),
-    }
+    Expr::bin(lhs, Op::NE, rhs)
 }
 
 // Code snippet

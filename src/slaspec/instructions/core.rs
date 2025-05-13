@@ -74,6 +74,10 @@ impl InstrBuilder {
         let words = self.pattern.fields();
         for word in words {
             for field in word.iter().rev() {
+                if field.is_blank() {
+                    continue;
+                }
+
                 pattern_str += &field.token_name(&self.prefix);
                 if let FieldType::Mask(val) = field.ftype() {
                     pattern_str += "=";
@@ -212,6 +216,9 @@ impl InstrFamilyBuilder {
         for instr in &self.instructions {
             for (wi, word) in instr.pattern().fields().iter().enumerate() {
                 for field in word {
+                    if field.is_blank() {
+                        continue;
+                    }
                     if field.is_var() {
                         self.variables.insert(field.clone());
                     }

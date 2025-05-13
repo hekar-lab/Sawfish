@@ -175,6 +175,10 @@ impl Field {
         false
     }
 
+    pub fn is_blank(&self) -> bool {
+        self.ftype == FieldType::Blank
+    }
+
     pub fn name(&self) -> String {
         let suffix = match &self.ftype {
             FieldType::Variable(regset) => regset.name(),

@@ -8,6 +8,7 @@ pub enum Op {
     Plus,
     Minus,
     BitOr,
+    Bang,
     EQ,
     NE,
     LT,
@@ -21,6 +22,7 @@ impl Op {
             Op::Plus => "+".to_string(),
             Op::Minus => "-".to_string(),
             Op::BitOr => "|".to_string(),
+            Op::Bang => "!".to_string(),
             Op::EQ => "==".to_string(),
             Op::NE => "!=".to_string(),
             Op::LT => "<".to_string(),
@@ -51,7 +53,7 @@ pub enum Expr {
 
     Macro {
         id: String,
-        param: Option<Box<Expr>>,
+        params: Vec<Box<Expr>>,
     },
     Addr {
         val: Box<Expr>,
@@ -66,6 +68,10 @@ pub enum Expr {
     Local {
         var: Box<Expr>,
         size: usize,
+    },
+    Unary {
+        op: Op,
+        expr: Box<Expr>,
     },
     Binary {
         lhs: Box<Expr>,
@@ -133,14 +139,21 @@ impl Expr {
     pub fn mac(id: &str) -> Expr {
         Expr::Macro {
             id: id.to_string(),
-            param: None,
+            params: Vec::new(),
         }
     }
 
     pub fn macp(id: &str, param: Expr) -> Expr {
         Expr::Macro {
             id: id.to_string(),
-            param: Some(Box::new(param)),
+            params: vec![Box::new(param)],
+        }
+    }
+
+    pub fn mac2p(id: &str, param1: Expr, param2: Expr) -> Expr {
+        Expr::Macro {
+            id: id.to_string(),
+            params: vec![Box::new(param1), Box::new(param2)],
         }
     }
 
@@ -164,6 +177,13 @@ impl Expr {
             lhs: Box::new(lhs),
             op: op,
             rhs: Box::new(rhs),
+        }
+    }
+
+    pub fn un(op: Op, expr: Expr) -> Expr {
+        Expr::Unary {
+            op: op,
+            expr: Box::new(expr),
         }
     }
 
@@ -229,17 +249,22 @@ impl Expr {
             Expr::Var { id } => return id.clone(),
             Expr::Reg { id } => return id.clone(),
             Expr::Number { val } => return format!("{val:#0x}"),
-            Expr::Macro { id, param } => {
-                if let Some(e) = param {
-                    return format!("{id}({})", e.build(pattern, prefix));
-                } else {
-                    return format!("{id}()");
+            Expr::Macro { id, params } => {
+                let mut params_str = Vec::new();
+
+                for p in params {
+                    params_str.push(p.build(pattern, prefix));
                 }
+
+                return format!("{id}({})", params_str.join(", "));
             }
             Expr::Label { id } => return format!("<{id}>"),
             Expr::Addr { val } => return format!("[{}]", val.build(pattern, prefix)),
             Expr::Local { var, size } => {
                 return format!("local {}:{size}", var.build(pattern, prefix));
+            }
+            Expr::Unary { op, expr } => {
+                return format!("{}{}", op.to_string(), expr.build(pattern, prefix));
             }
             Expr::Binary { lhs, op, rhs } => {
                 return format!(
@@ -274,7 +299,6 @@ impl Expr {
                     goto.build(pattern, prefix)
                 );
             }
-            _ => {}
         }
 
         String::new()
