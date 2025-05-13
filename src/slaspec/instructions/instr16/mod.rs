@@ -1,3 +1,4 @@
+pub mod cachectrl;
 pub mod cc2dreg;
 pub mod nop16;
 pub mod progctrl;
