@@ -242,8 +242,8 @@ impl InstrFamilyBuilder {
             tokens_str += &format!("define token {}Instr{} (16)\n", self.prefix, (i + 1) * 16);
             for tok in tokens {
                 tokens_str += &format!(
-                    "\t{} =\t({:2},{:2})\n",
-                    tok.token_name(&self.prefix),
+                    "\t{:16}({:2},{:2})\n",
+                    format!("{} = ", tok.token_name(&self.prefix)),
                     tok.start(),
                     tok.end()
                 );

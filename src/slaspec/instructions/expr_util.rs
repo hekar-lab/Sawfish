@@ -5,6 +5,10 @@ pub fn e_not(expr: Expr) -> Expr {
     Expr::un(Op::Bang, expr)
 }
 
+pub fn e_bit_not(expr: Expr) -> Expr {
+    Expr::un(Op::BitNot, expr)
+}
+
 // Binary operations
 pub fn e_copy(dst: Expr, src: Expr) -> Expr {
     Expr::bin(dst, Op::Copy, src)
@@ -20,6 +24,34 @@ pub fn e_sub(lhs: Expr, rhs: Expr) -> Expr {
 
 pub fn e_bit_or(lhs: Expr, rhs: Expr) -> Expr {
     Expr::bin(lhs, Op::BitOr, rhs)
+}
+
+pub fn e_bit_and(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::BitAnd, rhs)
+}
+
+pub fn e_bit_xor(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::BitXor, rhs)
+}
+
+pub fn e_lshft(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::LShft, rhs)
+}
+
+pub fn e_rshft(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::RShft, rhs)
+}
+
+pub fn e_and(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::And, rhs)
+}
+
+pub fn e_or(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::Or, rhs)
+}
+
+pub fn e_xor(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::Xor, rhs)
 }
 
 pub fn e_ne(lhs: Expr, rhs: Expr) -> Expr {
@@ -45,4 +77,8 @@ pub fn cs_pop(val: Expr, size: usize) -> Expr {
             None,
         )),
     )
+}
+
+pub fn cs_assign_by(op: fn(Expr, Expr) -> Expr, lhs: Expr, rhs: Expr) -> Expr {
+    e_copy(lhs.clone(), op(lhs, rhs))
 }

@@ -118,7 +118,7 @@ impl IMaskFactory {
             .name("IMaskMv")
             .set_field_type("regL", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(e_copy(
-                Expr::local(Expr::var(IMaskFactory::IMASK_VAR), 4),
+                Expr::local(IMaskFactory::IMASK_VAR, 4),
                 Expr::var(IMASK),
             ))
     }
@@ -236,7 +236,7 @@ impl InstrFactory for TestSetFactory {
                 .name("TestSet")
                 .display("TESTSET ({regL})".to_string())
                 .add_pcode(e_copy(
-                    Expr::local(Expr::var("testVal"), 1),
+                    Expr::local("testVal", 1),
                     Expr::ptr(Expr::field("regL"), 1),
                 ))
                 .add_pcode(e_copy(Expr::reg("CC"), Expr::num(0x0)))
@@ -265,7 +265,7 @@ impl InstrFactory for SyncFactory {
                 .name("Sync")
                 .display("STI IDLE {regL}".to_string())
                 .add_pcode(e_copy(
-                    Expr::local(Expr::var(IMaskFactory::IMASK_VAR), 4),
+                    Expr::local(IMaskFactory::IMASK_VAR, 4),
                     Expr::var(IMASK),
                 ))
                 .add_pcode(e_copy(

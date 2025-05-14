@@ -1,6 +1,6 @@
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_add, e_copy};
+use crate::slaspec::instructions::expr_util::{cs_assign_by, e_add};
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -49,10 +49,7 @@ impl CacheCtrlFactory {
                 Expr::macp(pcodeop, Expr::field("reg")),
                 if post_inc {
                     Some(Expr::line(
-                        e_copy(
-                            Expr::field("reg"),
-                            e_add(Expr::field("reg"), Expr::num(0x20)),
-                        ),
+                        cs_assign_by(e_add, Expr::field("reg"), Expr::num(0x20)),
                         None,
                     ))
                 } else {

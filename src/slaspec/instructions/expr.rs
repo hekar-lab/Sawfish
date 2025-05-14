@@ -7,8 +7,16 @@ pub enum Op {
     Copy,
     Plus,
     Minus,
+    BitNot,
     BitOr,
+    BitAnd,
+    BitXor,
+    LShft,
+    RShft,
     Bang,
+    And,
+    Or,
+    Xor,
     EQ,
     NE,
     LT,
@@ -18,16 +26,25 @@ pub enum Op {
 impl Op {
     pub fn to_string(&self) -> String {
         match self {
-            Op::Copy => "=".to_string(),
-            Op::Plus => "+".to_string(),
-            Op::Minus => "-".to_string(),
-            Op::BitOr => "|".to_string(),
-            Op::Bang => "!".to_string(),
-            Op::EQ => "==".to_string(),
-            Op::NE => "!=".to_string(),
-            Op::LT => "<".to_string(),
-            Op::GT => ">".to_string(),
+            Op::Copy => "=",
+            Op::Plus => "+",
+            Op::Minus => "-",
+            Op::BitNot => "~",
+            Op::BitOr => "|",
+            Op::BitAnd => "&",
+            Op::BitXor => "^",
+            Op::LShft => "<<",
+            Op::RShft => ">>",
+            Op::Bang => "!",
+            Op::And => "&&",
+            Op::Or => "||",
+            Op::Xor => "^^",
+            Op::EQ => "==",
+            Op::NE => "!=",
+            Op::LT => "<",
+            Op::GT => ">",
         }
+        .to_string()
     }
 }
 
@@ -165,9 +182,9 @@ impl Expr {
         Expr::Addr { val: Box::new(val) }
     }
 
-    pub fn local(var: Expr, size: usize) -> Expr {
+    pub fn local(var: &str, size: usize) -> Expr {
         Expr::Local {
-            var: Box::new(var),
+            var: Box::new(Expr::var(var)),
             size,
         }
     }
