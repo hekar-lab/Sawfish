@@ -3,7 +3,7 @@ use std::collections::VecDeque;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::{cs_mline, cs_pop, cs_push};
-use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
+use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
@@ -61,18 +61,21 @@ impl PushPopFactory {
         }
         let reg = dreg.unwrap();
 
+        let op = if push { cs_push } else { cs_pop };
+        let range: Vec<u16> = if push {
+            (reg..8).collect()
+        } else {
+            (reg..8).rev().collect()
+        };
+
         instr
             .set_field_type("dr", FieldType::Mask(reg))
-            .add_pcode(cs_mline(if push {
-                (reg..8)
-                    .map(|i| cs_push(Expr::reg(&format!("R{i}")), 4))
-                    .collect::<VecDeque<Expr>>()
-            } else {
-                (reg..8)
-                    .rev()
-                    .map(|i| cs_pop(Expr::reg(&format!("R{i}")), 4))
-                    .collect::<VecDeque<Expr>>()
-            }))
+            .add_pcode(cs_mline(
+                range
+                    .iter()
+                    .map(|i| op(Expr::reg(&format!("R{i}")), 4))
+                    .collect::<VecDeque<Expr>>(),
+            ))
     }
 
     fn preg_init(instr: InstrBuilder, preg: Option<u16>, push: bool) -> InstrBuilder {
@@ -81,18 +84,21 @@ impl PushPopFactory {
         }
         let reg = preg.unwrap();
 
+        let op = if push { cs_push } else { cs_pop };
+        let range: Vec<u16> = if push {
+            (reg..6).collect()
+        } else {
+            (reg..6).rev().collect()
+        };
+
         instr
             .set_field_type("pr", FieldType::Mask(reg))
-            .add_pcode(cs_mline(if push {
-                (reg..6)
-                    .map(|i| cs_push(Expr::reg(&format!("P{i}")), 4))
-                    .collect::<VecDeque<Expr>>()
-            } else {
-                (reg..6)
-                    .rev()
-                    .map(|i| cs_pop(Expr::reg(&format!("P{i}")), 4))
-                    .collect::<VecDeque<Expr>>()
-            }))
+            .add_pcode(cs_mline(
+                range
+                    .iter()
+                    .map(|i| op(Expr::reg(&format!("P{i}")), 4))
+                    .collect::<VecDeque<Expr>>(),
+            ))
     }
 
     fn base_instr(
