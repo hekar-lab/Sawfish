@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use super::expr::{Expr, Op};
 
 // Unary operations
@@ -81,4 +83,19 @@ pub fn cs_pop(val: Expr, size: usize) -> Expr {
 
 pub fn cs_assign_by(op: fn(Expr, Expr) -> Expr, lhs: Expr, rhs: Expr) -> Expr {
     e_copy(lhs.clone(), op(lhs, rhs))
+}
+
+fn rec_mline(mut exprs: VecDeque<Expr>) -> Option<Expr> {
+    match exprs.pop_front() {
+        Some(e) => Some(Expr::line(e, rec_mline(exprs))),
+        None => None,
+    }
+}
+
+pub fn cs_mline(mut exprs: VecDeque<Expr>) -> Expr {
+    if exprs.is_empty() {
+        panic!("Cannot make a multiline expression with an empty array!")
+    }
+
+    Expr::line(exprs.pop_front().unwrap(), rec_mline(exprs))
 }

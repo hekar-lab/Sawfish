@@ -1,6 +1,8 @@
 use super::instructions::core::InstrFamilyBuilder;
 
-use super::instructions::instr16::{cachectrl, cc2dreg, cc2stat, nop16, progctrl, pushpopreg};
+use super::instructions::instr16::{
+    cachectrl, cc2dreg, cc2stat, nop16, progctrl, pushpopmult, pushpopreg,
+};
 
 pub struct SLASpecBuilder {
     ifams: Vec<InstrFamilyBuilder>,
@@ -15,6 +17,7 @@ impl SLASpecBuilder {
             cc2dreg::instr_fam(),
             cachectrl::instr_fam(),
             cc2stat::instr_fam(),
+            pushpopmult::instr_fam(),
         ];
 
         for ifam in ifams.iter_mut() {

@@ -249,6 +249,10 @@ impl Expr {
                     "{}{}",
                     match &**current {
                         Expr::Label { id: _ } => format!("\n{}", current.build(pattern, prefix)),
+                        Expr::Line {
+                            current: _,
+                            next: _,
+                        } => current.build(pattern, prefix),
                         _ => format!("\n\t{};", current.build(pattern, prefix)),
                     },
                     if let Some(line) = next {
