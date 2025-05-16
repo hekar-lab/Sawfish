@@ -242,15 +242,12 @@ impl InstrFamilyBuilder {
             tokens_str += &format!("define token {}Instr{} (16)\n", self.prefix, (i + 1) * 16);
             for tok in tokens {
                 tokens_str += &format!(
-                    "\t{:16} = ({:2},{:2})\n",
+                    "\t{:16} = ({:2},{:2}) {}\n",
                     tok.token_name(&self.prefix),
                     tok.start(),
-                    tok.end()
+                    tok.end(),
+                    if tok.is_signed() { "signed" } else { "" }
                 );
-
-                if tok.is_signed() {
-                    tokens_str += " signed";
-                }
             }
             tokens_str += ";\n"
         }

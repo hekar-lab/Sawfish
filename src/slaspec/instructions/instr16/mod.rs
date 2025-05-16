@@ -1,6 +1,7 @@
 pub mod cachectrl;
 pub mod cc2dreg;
 pub mod cc2stat;
+pub mod ccflag;
 pub mod ccmv;
 pub mod nop16;
 pub mod progctrl;

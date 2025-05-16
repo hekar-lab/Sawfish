@@ -20,7 +20,13 @@ pub enum Op {
     EQ,
     NE,
     LT,
+    LTS,
+    LE,
+    LES,
     GT,
+    GTS,
+    GE,
+    GES,
 }
 
 impl Op {
@@ -42,7 +48,13 @@ impl Op {
             Op::EQ => "==",
             Op::NE => "!=",
             Op::LT => "<",
+            Op::LTS => "s<",
+            Op::LE => "<=",
+            Op::LES => "s<=",
             Op::GT => ">",
+            Op::GTS => "s>",
+            Op::GE => ">=",
+            Op::GES => "s>=",
         }
         .to_string()
     }

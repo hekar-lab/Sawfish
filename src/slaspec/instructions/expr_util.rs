@@ -56,8 +56,44 @@ pub fn e_xor(lhs: Expr, rhs: Expr) -> Expr {
     Expr::bin(lhs, Op::Xor, rhs)
 }
 
+pub fn e_eq(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::EQ, rhs)
+}
+
 pub fn e_ne(lhs: Expr, rhs: Expr) -> Expr {
     Expr::bin(lhs, Op::NE, rhs)
+}
+
+pub fn e_lt(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::LT, rhs)
+}
+
+pub fn e_lts(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::LTS, rhs)
+}
+
+pub fn e_le(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::LE, rhs)
+}
+
+pub fn e_les(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::LES, rhs)
+}
+
+pub fn e_gt(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::GT, rhs)
+}
+
+pub fn e_gts(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::GTS, rhs)
+}
+
+pub fn e_ge(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::GE, rhs)
+}
+
+pub fn e_ges(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::GES, rhs)
 }
 
 // Code snippet
