@@ -102,15 +102,15 @@ impl Scanner {
 
     fn variable(&mut self) {
         if self.chr_match('$') {
-            let content = self.var_content();
+            let content = self.var_content(true);
             self.add_token(Token::Variable(content));
         } else {
-            let content = self.var_content();
+            let content = self.var_content(false);
             self.add_token(Token::Field(content));
         }
     }
 
-    fn var_content(&mut self) -> String {
+    fn var_content(&mut self, is_var: bool) -> String {
         while !self.at_end() && self.peek() != '}' {
             self.advance();
         }
@@ -121,7 +121,11 @@ impl Scanner {
 
         self.advance();
 
-        String::from(&self.text[self.start + 1..self.current - 1])
+        if is_var {
+            String::from(&self.text[self.start + 2..self.current - 1])
+        } else {
+            String::from(&self.text[self.start + 1..self.current - 1])
+        }
     }
 }
 

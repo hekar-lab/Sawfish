@@ -7,6 +7,7 @@ pub enum Op {
     Copy,
     Plus,
     Minus,
+    Mult,
     BitNot,
     BitOr,
     BitAnd,
@@ -35,6 +36,7 @@ impl Op {
             Op::Copy => "=",
             Op::Plus => "+",
             Op::Minus => "-",
+            Op::Mult => "*",
             Op::BitNot => "~",
             Op::BitOr => "|",
             Op::BitAnd => "&",
@@ -84,7 +86,7 @@ pub enum Expr {
         id: String,
         params: Vec<Box<Expr>>,
     },
-    Addr {
+    Indirect {
         val: Box<Expr>,
     },
     Label {
@@ -190,8 +192,8 @@ impl Expr {
         Expr::Label { id: id.to_string() }
     }
 
-    pub fn addr(val: Expr) -> Expr {
-        Expr::Addr { val: Box::new(val) }
+    pub fn indirect(val: Expr) -> Expr {
+        Expr::Indirect { val: Box::new(val) }
     }
 
     pub fn local(var: &str, size: usize) -> Expr {
@@ -225,13 +227,13 @@ impl Expr {
 
     pub fn ret(addr: Expr) -> Expr {
         Expr::Return {
-            addr: Box::new(Self::addr(addr)),
+            addr: Box::new(Self::indirect(addr)),
         }
     }
 
     pub fn call(addr: Expr) -> Expr {
         Expr::Call {
-            addr: Box::new(Self::addr(addr)),
+            addr: Box::new(Self::indirect(addr)),
         }
     }
 
@@ -292,7 +294,7 @@ impl Expr {
                 return format!("{id}({})", params_str.join(", "));
             }
             Expr::Label { id } => return format!("<{id}>"),
-            Expr::Addr { val } => return format!("[{}]", val.build(pattern, prefix)),
+            Expr::Indirect { val } => return format!("[{}]", val.build(pattern, prefix)),
             Expr::Local { var, size } => {
                 return format!("local {}:{size}", var.build(pattern, prefix));
             }

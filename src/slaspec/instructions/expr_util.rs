@@ -24,6 +24,10 @@ pub fn e_sub(lhs: Expr, rhs: Expr) -> Expr {
     Expr::bin(lhs, Op::Minus, rhs)
 }
 
+pub fn e_mult(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::Mult, rhs)
+}
+
 pub fn e_bit_or(lhs: Expr, rhs: Expr) -> Expr {
     Expr::bin(lhs, Op::BitOr, rhs)
 }

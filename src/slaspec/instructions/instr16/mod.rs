@@ -1,3 +1,4 @@
+pub mod brcc;
 pub mod cachectrl;
 pub mod cc2dreg;
 pub mod cc2stat;

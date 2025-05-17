@@ -161,7 +161,7 @@ impl JumpFactory {
         goto_instr(ifam)
             .name("Jump")
             .display(format!("JUMP ({}{{regL}})", if pc { "PC + " } else { "" }))
-            .add_pcode(Expr::goto(Expr::addr(if pc {
+            .add_pcode(Expr::goto(Expr::indirect(if pc {
                 e_add(Expr::field("regL"), Expr::reg("PC"))
             } else {
                 Expr::field("regL")
