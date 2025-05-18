@@ -2,10 +2,8 @@ use itertools::Itertools;
 
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{
-    e_add, e_copy, e_eq, e_le, e_les, e_lt, e_lts, e_mult, e_not,
-};
-use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
+use crate::slaspec::instructions::expr_util::{e_add, e_copy, e_mult, e_not};
+use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(

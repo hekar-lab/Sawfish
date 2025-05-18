@@ -243,14 +243,6 @@ impl Pattern {
         None
     }
 
-    // fn set_field_id(mut self, old_id: &str, new_id: &str) -> Self {
-    //     if let Some(i) = self.get_field_index(old_id) {
-    //         self.fields[i].id = String::from(new_id);
-    //     }
-
-    //     self
-    // }
-
     pub fn set_field_type(mut self, field_id: &str, ftype: FieldType) -> Self {
         if let Some((wi, fi)) = self.get_field_index(field_id) {
             self.fields[wi][fi].ftype = ftype;
@@ -259,7 +251,7 @@ impl Pattern {
         self
     }
 
-    pub fn split_field(mut self, field_id: &str, mut split: ProtoPattern) -> Self {
+    pub fn split_field(mut self, field_id: &str, split: ProtoPattern) -> Self {
         if let Some((wi, mut fi)) = self.get_field_index(field_id) {
             let field = &self.fields[wi][fi];
 
@@ -270,7 +262,7 @@ impl Pattern {
 
             let mut start = self.fields[wi].remove(fi).bit_range.start;
 
-            while let Some(proto) = split.pop() {
+            for proto in split.fields.iter().rev() {
                 let f = proto.to_field(start);
                 start = f.bit_range.end + 1;
 
@@ -293,6 +285,8 @@ impl From<ProtoPattern> for Pattern {
             start += pfield.size;
         }
 
+        fields.reverse();
+
         Pattern {
             fields: [fields, Vec::new(), Vec::new(), Vec::new()],
         }
@@ -310,6 +304,7 @@ impl From<[ProtoPattern; 2]> for Pattern {
                 fields[word_index].push(pfield.to_field(start));
                 start += pfield.size;
             }
+            fields[word_index].reverse();
             word_index += 1;
         }
 
@@ -328,76 +323,10 @@ impl From<[ProtoPattern; 4]> for Pattern {
                 fields[word_index].push(pfield.to_field(start));
                 start += pfield.size;
             }
+            fields[word_index].reverse();
             word_index += 1;
         }
 
         Pattern { fields }
     }
 }
-
-// #[derive(Debug, Clone)]
-// pub enum Pattern {
-//     Word(WordPattern),
-//     Double([WordPattern; 2]),
-//     Quad([WordPattern; 4]),
-// }
-
-// impl Pattern {
-//     fn get_field_index(&self, field_id: &str) -> Option<(usize, usize)> {
-//         for (i, field) in self.fields.iter().enumerate() {
-//             if field.id == field_id {
-//                 return Some(i);
-//             }
-//         }
-
-//         None
-//     }
-
-//     pub fn set_field_type(mut self, field_id: &str, ftype: FieldType) -> Self {
-//         if let Some(i) = self.get_field_index(field_id) {
-//             self.fields[i].ftype = ftype;
-//         }
-
-//         self
-//     }
-
-//     pub fn split_field(mut self, field_id: &str, mut split: ProtoPattern) -> Self {
-
-//     }
-// }
-
-// impl From<ProtoPattern> for Pattern {
-//     fn from(value: ProtoPattern) -> Self {
-//         Pattern::Word(WordPattern::from(value))
-//     }
-// }
-
-// impl From<[ProtoPattern; 2]> for Pattern {
-//     fn from(value: [ProtoPattern; 2]) -> Self {
-//         Pattern::Double([
-//             WordPattern::from(value[0].clone()),
-//             WordPattern::from(value[1].clone()),
-//         ])
-//     }
-// }
-
-// impl From<[ProtoPattern; 4]> for Pattern {
-//     fn from(value: [ProtoPattern; 4]) -> Self {
-//         Pattern::Quad([
-//             WordPattern::from(value[0].clone()),
-//             WordPattern::from(value[1].clone()),
-//             WordPattern::from(value[2].clone()),
-//             WordPattern::from(value[3].clone()),
-//         ])
-//     }
-// }
-
-// impl Into<Vec<WordPattern>> for Pattern {
-//     fn into(self) -> Vec<WordPattern> {
-//         match self {
-//             Pattern::Word(word) => vec![word],
-//             Pattern::Double(words) => words.into(),
-//             Pattern::Quad(words) => words.into(),
-//         }
-//     }
-// }

@@ -73,7 +73,7 @@ impl InstrBuilder {
 
         let words = self.pattern.fields();
         for word in words {
-            for field in word.iter().rev() {
+            for field in word {
                 if field.is_blank() {
                     continue;
                 }
@@ -204,6 +204,10 @@ impl InstrFamilyBuilder {
         }
     }
 
+    pub fn name(&self) -> String {
+        self.name.clone()
+    }
+
     pub fn add_pcodeop(&mut self, pcodeop: &str) {
         self.pcodeops.push(String::from(pcodeop));
     }
@@ -228,6 +232,42 @@ impl InstrFamilyBuilder {
         }
     }
 
+    fn build_desc(&self) -> String {
+        let mut desc_str = String::new();
+
+        desc_str += &format!("## {} ({})\n", self.desc, self.name);
+        desc_str += "##\n";
+
+        let pattern_sep = "## +---+---+---+---|---+---+---+---|---+---+---+---|---+---+---+---+\n";
+
+        for word in self.base_pattern.fields() {
+            if word.is_empty() {
+                continue;
+            }
+            desc_str += pattern_sep;
+            let mut word_str = "## ".to_string();
+
+            for field in word {
+                if field.id() == "sig" {
+                    if let FieldType::Mask(mask) = field.ftype() {
+                        let bin_str = format!("{mask:0len$b}", len = field.len());
+                        for bit in bin_str.chars() {
+                            word_str += &format!("| {bit} ");
+                        }
+                    }
+                } else {
+                    word_str += &format!("|{:.^len$}", field.id(), len = (4 * field.len() - 1));
+                }
+            }
+
+            word_str += "|\n";
+            desc_str += &word_str;
+        }
+
+        desc_str += pattern_sep;
+        desc_str
+    }
+
     fn build_tokens(&self) -> String {
         let mut tokens_str = String::new();
 
@@ -249,7 +289,7 @@ impl InstrFamilyBuilder {
                     if tok.is_signed() { "signed" } else { "" }
                 );
             }
-            tokens_str += ";\n"
+            tokens_str += ";\n\n"
         }
 
         tokens_str
@@ -266,7 +306,12 @@ impl InstrFamilyBuilder {
     }
 
     pub fn build(&self) -> String {
-        format!("{}{}", self.build_tokens(), self.build_instructions())
+        format!(
+            "{}\n### Tokens ###\n\n{}\n### Insstructions ###\n\n{}",
+            self.build_desc(),
+            self.build_tokens(),
+            self.build_instructions()
+        )
     }
 }
 
