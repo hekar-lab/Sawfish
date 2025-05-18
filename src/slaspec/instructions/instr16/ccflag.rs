@@ -75,6 +75,7 @@ impl CompRegFactory {
             ))
             .set_field_type("i", FieldType::Mask(if imm { 0x1 } else { 0x0 }))
             .set_field_type("opc", FieldType::Mask(op as u16))
+            .set_field_type("g", FieldType::Mask(if preg { 0x1 } else { 0x0 }))
             .set_field_type(
                 "x",
                 FieldType::Variable(if preg {

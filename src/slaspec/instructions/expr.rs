@@ -92,7 +92,7 @@ pub enum Expr {
     Label {
         id: String,
     },
-    Trunc {
+    Size {
         var: Box<Expr>,
         size: usize,
     },
@@ -156,8 +156,8 @@ impl Expr {
         Expr::Reg { id: id.to_string() }
     }
 
-    pub fn trunc(var: Expr, size: usize) -> Expr {
-        Expr::Trunc {
+    pub fn size(var: Expr, size: usize) -> Expr {
+        Expr::Size {
             var: Box::new(var),
             size,
         }
@@ -309,7 +309,7 @@ impl Expr {
                     rhs.build(pattern, prefix)
                 );
             }
-            Expr::Trunc { var, size } => {
+            Expr::Size { var, size } => {
                 return format!("{}:{size}", var.build(pattern, prefix));
             }
             Expr::Ptr { addr, size } => {

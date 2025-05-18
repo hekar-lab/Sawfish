@@ -105,7 +105,7 @@ pub fn cs_push(val: Expr, size: usize) -> Expr {
     Expr::line(
         e_copy(Expr::reg("SP"), e_sub(Expr::reg("SP"), Expr::num(4))),
         Some(Expr::line(
-            e_copy(Expr::ptr(Expr::reg("SP"), size), Expr::trunc(val, size)),
+            e_copy(Expr::ptr(Expr::reg("SP"), size), Expr::size(val, size)),
             None,
         )),
     )
@@ -113,7 +113,7 @@ pub fn cs_push(val: Expr, size: usize) -> Expr {
 
 pub fn cs_pop(val: Expr, size: usize) -> Expr {
     Expr::line(
-        e_copy(Expr::trunc(val, size), Expr::ptr(Expr::reg("SP"), size)),
+        e_copy(val, Expr::ptr(Expr::reg("SP"), size)),
         Some(Expr::line(
             e_copy(Expr::reg("SP"), e_add(Expr::reg("SP"), Expr::num(4))),
             None,
@@ -138,4 +138,21 @@ pub fn cs_mline(mut exprs: VecDeque<Expr>) -> Expr {
     }
 
     Expr::line(exprs.pop_front().unwrap(), rec_mline(exprs))
+}
+
+pub fn cs_ifgoto(cond: Expr, goto: Expr) -> Expr {
+    let label = "workaround";
+    let inv = if let Expr::Unary { op: Op::Bang, expr } = cond {
+        *expr
+    } else {
+        e_not(cond)
+    };
+    cs_mline(
+        vec![
+            Expr::ifgoto(inv, Expr::label(label)),
+            Expr::goto(Expr::indirect(goto)),
+            Expr::label(label),
+        ]
+        .into(),
+    )
 }

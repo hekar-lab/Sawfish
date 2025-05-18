@@ -56,8 +56,8 @@ impl SLASpecBuilder {
     fn build_main_header() -> String {
         let mut header = String::new();
 
-        header += &format!("define endian={}\n", ENDIAN);
-        header += &format!("define alignment={}\n", ALIGNMENT);
+        header += &format!("define endian={};\n", ENDIAN);
+        header += &format!("define alignment={};\n", ALIGNMENT);
         header += "\n";
         header += &format!(
             "define space {} type=ram_space size=4 default;\n",
@@ -120,7 +120,7 @@ impl SLASpecBuilder {
 
         create_dir_all(&inc_dir).unwrap();
 
-        copy("data/registers.slaspec", inc_dir.join("registers.slaspec")).unwrap();
+        copy("data/registers.sinc", inc_dir.join("registers.sinc")).unwrap();
 
         let mut instr_inc_file = File::create(inc_dir.join("instructions.sinc")).unwrap();
 

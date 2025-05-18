@@ -30,9 +30,48 @@ impl RegisterSet {
         }
     }
 
+    fn build_regs(id: &str, len: usize, suffix: Option<&str>) -> Vec<String> {
+        let mut regs = Vec::new();
+
+        for i in 0..len {
+            regs.push(format!(
+                "{}{}{}",
+                id,
+                i,
+                if let Some(s) = suffix {
+                    format!(".{}", s)
+                } else {
+                    "".to_string()
+                }
+            ));
+        }
+
+        regs
+    }
+
+    fn build_regs_from(regs: Vec<&str>) -> Vec<String> {
+        regs.into_iter().map(|v| v.to_string()).collect()
+    }
+
     pub fn regs(&self) -> Vec<String> {
         match self {
-            _ => Vec::new(),
+            Self::DReg => Self::build_regs("R", 8, None),
+            Self::DRegL => Self::build_regs("R", 8, Some("L")),
+            Self::PReg => {
+                let mut regs = Self::build_regs("P", 6, None);
+                regs.append(&mut Self::build_regs_from(vec!["SP", "FP"]));
+                regs
+            }
+            Self::IReg => Self::build_regs("I", 4, None),
+            Self::MReg => Self::build_regs("M", 4, None),
+            Self::BReg => Self::build_regs("B", 4, None),
+            Self::LReg => Self::build_regs("L", 4, None),
+            Self::SyRg2 => Self::build_regs_from(vec![
+                "LC0", "LT0", "LB0", "LC1", "LT1", "LB1", "CYCLES", "CYCLES2",
+            ]),
+            Self::SyRg3 => Self::build_regs_from(vec![
+                "USP", "SEQSTAT", "SYSCFG", "RETI", "RETX", "RETN", "RETE", "EMUDAT",
+            ]),
         }
     }
 }

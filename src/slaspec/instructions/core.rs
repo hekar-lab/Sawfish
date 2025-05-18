@@ -295,6 +295,34 @@ impl InstrFamilyBuilder {
         tokens_str
     }
 
+    fn build_variables(&self) -> String {
+        let mut var_str = String::new();
+        let mut variables: Vec<Field> = self.variables.clone().into_iter().collect();
+        variables.sort_by(|a, b| a.ftype().cmp(&b.ftype()));
+
+        for var in variables {
+            if let FieldType::Variable(regset) = var.ftype() {
+                var_str += &format!(
+                    "attach variables {} [{}];\n",
+                    var.token_name(&self.prefix),
+                    regset.regs().join(" ")
+                );
+            }
+        }
+
+        var_str
+    }
+
+    fn build_pcodeops(&self) -> String {
+        let mut pcodeops_str = String::new();
+
+        for op in &self.pcodeops {
+            pcodeops_str += &format!("define pcodeop {};\n", op);
+        }
+
+        pcodeops_str
+    }
+
     fn build_instructions(&self) -> String {
         let mut instr_str = String::new();
 
@@ -305,13 +333,30 @@ impl InstrFamilyBuilder {
         instr_str
     }
 
-    pub fn build(&self) -> String {
+    fn build_final_instr(&self) -> String {
         format!(
-            "{}\n### Tokens ###\n\n{}\n### Insstructions ###\n\n{}",
-            self.build_desc(),
-            self.build_tokens(),
-            self.build_instructions()
+            ":^{ifam} is {ifam} {{ build {ifam}; }}\n",
+            ifam = self.name()
         )
+    }
+
+    pub fn build(&self) -> String {
+        let mut build = String::new();
+        build += &format!("{}\n", self.build_desc());
+        build += &format!("### Tokens ###\n\n{}\n", self.build_tokens());
+        if !self.variables.is_empty() {
+            build += &format!("### Variables ###\n\n{}\n\n", self.build_variables());
+        }
+        if !self.pcodeops.is_empty() {
+            build += &format!("### Operations ###\n\n{}\n\n", self.build_pcodeops());
+        }
+        build += &format!(
+            "### Instructions ###\n\n{}\n\n{}",
+            self.build_instructions(),
+            self.build_final_instr()
+        );
+
+        build
     }
 }
 

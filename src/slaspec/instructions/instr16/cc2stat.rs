@@ -59,10 +59,10 @@ struct MvStatToCCFactory();
 impl MvStatToCCFactory {
     fn astat_flag() -> Expr {
         e_bit_and(
-            Expr::trunc(
-                Expr::grp(e_rshft(Expr::reg("ASTAT"), Expr::field("cbit"))),
-                1,
-            ),
+            Expr::grp(e_rshft(
+                Expr::size(Expr::reg("ASTAT"), 1),
+                Expr::size(Expr::field("cbit"), 1),
+            )),
             Expr::num(0x1),
         )
     }

@@ -2,7 +2,7 @@ use itertools::Itertools;
 
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_add, e_copy, e_mult, e_not};
+use crate::slaspec::instructions::expr_util::{cs_ifgoto, e_add, e_copy, e_mult, e_not};
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -28,6 +28,7 @@ struct BranchCCFactory();
 impl BranchCCFactory {
     fn base_instr(ifam: &InstrFamilyBuilder, cc: bool, branch_pred: bool) -> InstrBuilder {
         let addr_var = "addr";
+        let addr_ptr_var = "addrPtr";
         InstrBuilder::new(ifam)
             .name("BrCC")
             .display(format!(
@@ -44,13 +45,17 @@ impl BranchCCFactory {
                     e_mult(Expr::field("off"), Expr::num(2)),
                 ),
             ))
-            .add_pcode(Expr::ifgoto(
+            .add_pcode(e_copy(
+                Expr::local(addr_ptr_var, 4),
+                Expr::ptr(Expr::size(Expr::var(addr_var), 4), 4),
+            ))
+            .add_pcode(cs_ifgoto(
                 if cc {
                     Expr::reg("CC")
                 } else {
                     e_not(Expr::reg("CC"))
                 },
-                Expr::grp(Expr::ptr(Expr::var(addr_var), 4)),
+                Expr::var(addr_ptr_var),
             ))
     }
 }

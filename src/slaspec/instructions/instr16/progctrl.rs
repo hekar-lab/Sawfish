@@ -24,6 +24,8 @@ pub fn instr_fam() -> InstrFamilyBuilder {
     ifam.add_pcodeop("csync");
     ifam.add_pcodeop("ssync");
     ifam.add_pcodeop("emuexcpt");
+    ifam.add_pcodeop("raise");
+    ifam.add_pcodeop("excpt");
 
     ifam.add_instrs(&ReturnFactory());
     ifam.add_instrs(&SyncModeFactory());
@@ -185,7 +187,7 @@ impl CallFactory {
         goto_instr(ifam)
             .name("Call")
             .display(format!("CALL ({}{{regL}})", if pc { "PC + " } else { "" }))
-            .add_pcode(e_copy(Expr::reg("RETS"), Expr::var("instr_next")))
+            .add_pcode(e_copy(Expr::reg("RETS"), Expr::var("inst_next")))
             .add_pcode(Expr::call(if pc {
                 e_add(Expr::field("regL"), Expr::reg("PC"))
             } else {
@@ -212,7 +214,7 @@ impl RaiseFactory {
             .set_field_type("opc", FieldType::Mask(opc_mask))
             .name("Raise")
             .display(format!("{} {{reg}}", op.to_uppercase()))
-            .add_pcode(Expr::macp(op, Expr::trunc(Expr::field("reg"), 1)))
+            .add_pcode(Expr::macp(op, Expr::size(Expr::field("reg"), 1)))
     }
 }
 

@@ -5,9 +5,9 @@ use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern,
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
-        "CC2Dreg",
-        "Move CC conditional bit, to and from Dreg",
-        "c2d",
+        "CacheCtrl",
+        "Cache Control",
+        "cct",
         ProtoPattern::new(vec![
             ProtoField::new("sig", FieldType::Mask(0x009), 10),
             ProtoField::new("a", FieldType::Blank, 1),
