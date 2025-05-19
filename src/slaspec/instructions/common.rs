@@ -1,4 +1,10 @@
-use super::pattern::{FieldType, RegisterSet};
+use super::{
+    expr::Expr,
+    pattern::{FieldType, RegisterSet},
+};
+
+pub type BinOp = fn(Expr, Expr) -> Expr;
+pub type UnOp = fn(Expr) -> Expr;
 
 #[derive(Debug, Clone)]
 pub enum RegParam {

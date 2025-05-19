@@ -36,8 +36,8 @@ impl BranchCCFactory {
                 if cc { "" } else { "!" },
                 if branch_pred { "(BP)" } else { "" }
             ))
-            .set_field_type("t", FieldType::Mask(if cc { 0x1 } else { 0x0 }))
-            .set_field_type("b", FieldType::Mask(if branch_pred { 0x1 } else { 0x0 }))
+            .set_field_type("t", FieldType::Mask(cc as u16))
+            .set_field_type("b", FieldType::Mask(branch_pred as u16))
             .add_action(e_copy(
                 Expr::var(addr_var),
                 e_add(

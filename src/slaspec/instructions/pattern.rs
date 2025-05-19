@@ -6,6 +6,8 @@ use super::util::capitalize;
 pub enum RegisterSet {
     DReg,
     DRegL,
+    DRegH,
+    DRegB,
     PReg,
     IReg,
     MReg,
@@ -20,6 +22,8 @@ impl RegisterSet {
         match self {
             Self::DReg => String::from("DReg"),
             Self::DRegL => String::from("DRegL"),
+            Self::DRegH => String::from("DRegH"),
+            Self::DRegB => String::from("DRegB"),
             Self::PReg => String::from("PReg"),
             Self::IReg => String::from("IReg"),
             Self::MReg => String::from("MReg"),
@@ -57,6 +61,8 @@ impl RegisterSet {
         match self {
             Self::DReg => Self::build_regs("R", 8, None),
             Self::DRegL => Self::build_regs("R", 8, Some("L")),
+            Self::DRegH => Self::build_regs("R", 8, Some("H")),
+            Self::DRegB => Self::build_regs("R", 8, Some("B")),
             Self::PReg => {
                 let mut regs = Self::build_regs("P", 6, None);
                 regs.append(&mut Self::build_regs_from(vec!["SP", "FP"]));

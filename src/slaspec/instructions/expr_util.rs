@@ -1,10 +1,17 @@
 use std::collections::VecDeque;
 
-use super::expr::{Expr, Op};
+use super::{
+    common::BinOp,
+    expr::{Expr, Op},
+};
 
 // Unary operations
 pub fn e_not(expr: Expr) -> Expr {
     Expr::un(Op::Bang, expr)
+}
+
+pub fn e_neg(expr: Expr) -> Expr {
+    Expr::un(Op::Minus, expr)
 }
 
 pub fn e_bit_not(expr: Expr) -> Expr {
@@ -38,6 +45,14 @@ pub fn e_bit_and(lhs: Expr, rhs: Expr) -> Expr {
 
 pub fn e_bit_xor(lhs: Expr, rhs: Expr) -> Expr {
     Expr::bin(lhs, Op::BitXor, rhs)
+}
+
+pub fn e_alshft(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::ALShft, rhs)
+}
+
+pub fn e_arshft(lhs: Expr, rhs: Expr) -> Expr {
+    Expr::bin(lhs, Op::ARShft, rhs)
 }
 
 pub fn e_lshft(lhs: Expr, rhs: Expr) -> Expr {
@@ -121,7 +136,7 @@ pub fn cs_pop(val: Expr, size: usize) -> Expr {
     )
 }
 
-pub fn cs_assign_by(op: fn(Expr, Expr) -> Expr, lhs: Expr, rhs: Expr) -> Expr {
+pub fn cs_assign_by(op: BinOp, lhs: Expr, rhs: Expr) -> Expr {
     e_copy(lhs.clone(), op(lhs, rhs))
 }
 

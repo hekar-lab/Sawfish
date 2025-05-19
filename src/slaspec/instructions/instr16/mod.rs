@@ -1,3 +1,4 @@
+pub mod alu2op;
 pub mod brcc;
 pub mod cachectrl;
 pub mod cc2dreg;

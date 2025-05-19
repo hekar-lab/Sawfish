@@ -1,5 +1,6 @@
 use itertools::Itertools;
 
+use crate::slaspec::instructions::common::BinOp;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::{e_copy, e_eq, e_le, e_les, e_lt, e_lts};
@@ -44,7 +45,7 @@ impl CompOp {
         .to_string()
     }
 
-    fn op_expr(&self) -> fn(Expr, Expr) -> Expr {
+    fn op_expr(&self) -> BinOp {
         match self {
             Self::Eq => e_eq,
             Self::Lower => e_lts,
@@ -73,9 +74,9 @@ impl CompRegFactory {
                 op.op_str(),
                 if op.is_unsigned() { " (IU)" } else { "" }
             ))
-            .set_field_type("i", FieldType::Mask(if imm { 0x1 } else { 0x0 }))
+            .set_field_type("i", FieldType::Mask(imm as u16))
             .set_field_type("opc", FieldType::Mask(op as u16))
-            .set_field_type("g", FieldType::Mask(if preg { 0x1 } else { 0x0 }))
+            .set_field_type("g", FieldType::Mask(preg as u16))
             .set_field_type(
                 "x",
                 FieldType::Variable(if preg {

@@ -1,3 +1,4 @@
+use crate::slaspec::instructions::common::BinOp;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::{
@@ -44,7 +45,7 @@ impl CCOp {
         .to_string()
     }
 
-    fn to_s2c_op(&self) -> Option<fn(Expr, Expr) -> Expr> {
+    fn to_s2c_op(&self) -> Option<BinOp> {
         match self {
             Self::Or => Some(e_or),
             Self::And => Some(e_and),

@@ -36,7 +36,7 @@ impl CacheCtrlFactory {
         pcodeop: &str,
     ) -> InstrBuilder {
         InstrBuilder::new(ifam)
-            .set_field_type("a", FieldType::Mask(if post_inc { 0x1 } else { 0x0 }))
+            .set_field_type("a", FieldType::Mask(post_inc as u16))
             .set_field_type("opc", FieldType::Mask(opc))
             .set_field_type("reg", FieldType::Variable(RegisterSet::PReg))
             .name("CacheCtrl")

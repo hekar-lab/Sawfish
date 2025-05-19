@@ -36,7 +36,7 @@ impl PushPopFactory {
     fn push_pop_instr(ifam: &InstrFamilyBuilder, push: bool, param: RegParam) -> InstrBuilder {
         let mut instr = InstrBuilder::new(ifam)
             .name(if push { "Push" } else { "Pop" })
-            .set_field_type("w", FieldType::Mask(if push { 0x1 } else { 0x0 }))
+            .set_field_type("w", FieldType::Mask(push as u16))
             .set_field_type("grp", FieldType::Mask(param.grp()));
 
         let op = if push { cs_push } else { cs_pop };

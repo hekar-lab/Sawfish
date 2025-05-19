@@ -31,9 +31,9 @@ impl CCMvFactory {
     fn base_instr(ifam: &InstrFamilyBuilder, cc: bool, psrc: bool, pdst: bool) -> InstrBuilder {
         InstrBuilder::new(ifam)
             .name("MvRegToRegCond")
-            .set_field_type("t", FieldType::Mask(if cc { 0x1 } else { 0x0 }))
-            .set_field_type("d", FieldType::Mask(if psrc { 0x1 } else { 0x0 }))
-            .set_field_type("s", FieldType::Mask(if pdst { 0x1 } else { 0x0 }))
+            .set_field_type("t", FieldType::Mask(cc as u16))
+            .set_field_type("d", FieldType::Mask(psrc as u16))
+            .set_field_type("s", FieldType::Mask(pdst as u16))
             .set_field_type(
                 "dst",
                 FieldType::Variable(if pdst {

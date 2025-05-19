@@ -109,9 +109,9 @@ impl PushPopFactory {
     ) -> InstrBuilder {
         let mut instr = InstrBuilder::new(ifam)
             .name("PushPopMul16")
-            .set_field_type("d", FieldType::Mask(if dreg.is_none() { 0x0 } else { 0x1 }))
-            .set_field_type("p", FieldType::Mask(if preg.is_none() { 0x0 } else { 0x1 }))
-            .set_field_type("w", FieldType::Mask(if push { 0x1 } else { 0x0 }))
+            .set_field_type("d", FieldType::Mask(!dreg.is_none() as u16))
+            .set_field_type("p", FieldType::Mask(!preg.is_none() as u16))
+            .set_field_type("w", FieldType::Mask(push as u16))
             .display(if push {
                 Self::push_display(dreg, preg)
             } else {
