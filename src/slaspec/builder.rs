@@ -6,7 +6,7 @@ use super::globals::{ALIGNMENT, ENDIAN, RAM_SAPCE, REGISTER_SPACE};
 use super::instructions::core::InstrFamilyBuilder;
 
 use super::instructions::instr16::{
-    alu2op, brcc, cachectrl, cc2dreg, cc2stat, ccflag, ccmv, nop16, progctrl, pushpopmult,
+    alu2op, brcc, cachectrl, cc2dreg, cc2stat, ccflag, ccmv, nop16, progctrl, ptr2op, pushpopmult,
     pushpopreg, regmv, ujump,
 };
 
@@ -32,6 +32,7 @@ impl SLASpecBuilder {
             ujump::instr_fam(),
             regmv::instr_fam(),
             alu2op::instr_fam(),
+            ptr2op::instr_fam(),
         ];
 
         for ifam in ifams_16.iter_mut() {

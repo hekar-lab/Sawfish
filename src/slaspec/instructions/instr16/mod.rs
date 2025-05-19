@@ -7,6 +7,7 @@ pub mod ccflag;
 pub mod ccmv;
 pub mod nop16;
 pub mod progctrl;
+pub mod ptr2op;
 pub mod pushpopmult;
 pub mod pushpopreg;
 pub mod regmv;
