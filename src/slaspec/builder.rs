@@ -7,7 +7,7 @@ use super::instructions::core::InstrFamilyBuilder;
 
 use super::instructions::instr16::{
     brcc, cachectrl, cc2dreg, cc2stat, ccflag, ccmv, nop16, progctrl, pushpopmult, pushpopreg,
-    ujump,
+    regmv, ujump,
 };
 
 pub struct SLASpecBuilder {
@@ -30,6 +30,7 @@ impl SLASpecBuilder {
             ccflag::instr_fam(),
             brcc::instr_fam(),
             ujump::instr_fam(),
+            regmv::instr_fam(),
         ];
 
         for ifam in ifams_16.iter_mut() {

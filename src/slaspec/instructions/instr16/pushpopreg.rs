@@ -1,3 +1,4 @@
+use crate::slaspec::instructions::common::RegParam;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::{cs_pop, cs_push};
@@ -23,22 +24,6 @@ pub fn instr_fam() -> InstrFamilyBuilder {
 
 struct PushPopFactory();
 
-#[derive(Debug, Clone)]
-enum Info {
-    Reg { id: String, size: usize, mask: u16 },
-    Var(RegisterSet),
-}
-
-impl Info {
-    fn reg(id: &str, size: usize, mask: u16) -> Self {
-        Info::Reg {
-            id: id.to_string(),
-            size,
-            mask,
-        }
-    }
-}
-
 impl PushPopFactory {
     fn push_display(val: &str) -> String {
         format!("[--SP] = {val}")
@@ -48,11 +33,11 @@ impl PushPopFactory {
         format!("{val} = [SP++]")
     }
 
-    fn push_pop_instr(ifam: &InstrFamilyBuilder, push: bool, grp: u16, info: Info) -> InstrBuilder {
+    fn push_pop_instr(ifam: &InstrFamilyBuilder, push: bool, param: RegParam) -> InstrBuilder {
         let mut instr = InstrBuilder::new(ifam)
             .name(if push { "Push" } else { "Pop" })
             .set_field_type("w", FieldType::Mask(if push { 0x1 } else { 0x0 }))
-            .set_field_type("grp", FieldType::Mask(grp));
+            .set_field_type("grp", FieldType::Mask(param.grp()));
 
         let op = if push { cs_push } else { cs_pop };
         let display = if push {
@@ -61,14 +46,19 @@ impl PushPopFactory {
             Self::pop_display
         };
 
-        match info {
-            Info::Reg { id, size, mask } => {
+        match param {
+            RegParam::Fixed {
+                group: _,
+                id,
+                size,
+                mask,
+            } => {
                 instr = instr
                     .set_field_type("reg", FieldType::Mask(mask))
                     .display(display(&id))
                     .add_pcode(op(Expr::var(&id), size));
             }
-            Info::Var(rset) => match rset {
+            RegParam::Var { group: _, regset } => match regset {
                 RegisterSet::IReg | RegisterSet::MReg | RegisterSet::BReg | RegisterSet::LReg => {
                     instr = instr
                         .split_field(
@@ -76,13 +66,13 @@ impl PushPopFactory {
                             ProtoPattern::new(vec![
                                 ProtoField::new(
                                     "regH",
-                                    FieldType::Mask(match rset {
+                                    FieldType::Mask(match regset {
                                         RegisterSet::IReg | RegisterSet::BReg => 0x0,
                                         _ => 0x1,
                                     }),
                                     1,
                                 ),
-                                ProtoField::new("regL", FieldType::Variable(rset), 2),
+                                ProtoField::new("regL", FieldType::Variable(regset), 2),
                             ]),
                         )
                         .display(display("{regL}"))
@@ -90,7 +80,7 @@ impl PushPopFactory {
                 }
                 _ => {
                     instr = instr
-                        .set_field_type("reg", FieldType::Variable(rset))
+                        .set_field_type("reg", FieldType::Variable(regset))
                         .display(display("{reg}"))
                         .add_pcode(op(Expr::field("reg"), 4));
                 }
@@ -104,26 +94,11 @@ impl PushPopFactory {
 impl InstrFactory for PushPopFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
         let mut instrs = Vec::new();
-        let infos = [
-            (0x0, Info::Var(RegisterSet::DReg)),
-            (0x1, Info::Var(RegisterSet::PReg)),
-            (0x2, Info::Var(RegisterSet::IReg)),
-            (0x2, Info::Var(RegisterSet::MReg)),
-            (0x3, Info::Var(RegisterSet::BReg)),
-            (0x3, Info::Var(RegisterSet::LReg)),
-            (0x4, Info::reg("A0.X", 1, 0x0)),
-            (0x4, Info::reg("A0.W", 4, 0x1)),
-            (0x4, Info::reg("A1.X", 1, 0x2)),
-            (0x4, Info::reg("A1.W", 4, 0x3)),
-            (0x4, Info::reg("ASTAT", 4, 0x6)),
-            (0x4, Info::reg("RETS", 4, 0x7)),
-            (0x6, Info::Var(RegisterSet::SyRg2)),
-            (0x7, Info::Var(RegisterSet::SyRg3)),
-        ];
+        let params = RegParam::all_regs();
 
-        for (grp, info) in infos {
-            instrs.push(Self::push_pop_instr(ifam, false, grp, info.clone()));
-            instrs.push(Self::push_pop_instr(ifam, true, grp, info));
+        for param in params {
+            instrs.push(Self::push_pop_instr(ifam, false, param.clone()));
+            instrs.push(Self::push_pop_instr(ifam, true, param));
         }
 
         instrs

@@ -11,7 +11,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         "Conditional Branch PC relative on CC",
         "brc",
         ProtoPattern::new(vec![
-            ProtoField::new("sig", FieldType::Mask(0x01), 4),
+            ProtoField::new("sig", FieldType::Mask(0x1), 4),
             ProtoField::new("t", FieldType::Blank, 1),
             ProtoField::new("b", FieldType::Blank, 1),
             ProtoField::new("off", FieldType::SImmVal, 10),

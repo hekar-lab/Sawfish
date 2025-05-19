@@ -9,7 +9,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         "Unconditional Branch PC relative with 12bit offset",
         "ujp",
         ProtoPattern::new(vec![
-            ProtoField::new("sig", FieldType::Mask(0x02), 4),
+            ProtoField::new("sig", FieldType::Mask(0x2), 4),
             ProtoField::new("off", FieldType::SImmVal, 12),
         ]),
     );

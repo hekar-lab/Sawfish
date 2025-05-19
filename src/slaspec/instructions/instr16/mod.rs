@@ -8,4 +8,5 @@ pub mod nop16;
 pub mod progctrl;
 pub mod pushpopmult;
 pub mod pushpopreg;
+pub mod regmv;
 pub mod ujump;
