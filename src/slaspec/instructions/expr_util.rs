@@ -303,7 +303,7 @@ pub fn cs_mline(mut exprs: VecDeque<Expr>) -> Expr {
 }
 
 pub fn cs_ifgoto(cond: Expr, goto: Expr) -> Expr {
-    let label = "workaround";
+    let label = "ignore_jump";
     let inv = if let Expr::Unary { op: Op::Bang, expr } = cond {
         *expr
     } else {

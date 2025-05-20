@@ -3,8 +3,8 @@ use super::{
     pattern::{FieldType, RegisterSet},
 };
 
-pub type BinOp = fn(Expr, Expr) -> Expr;
 pub type UnOp = fn(Expr) -> Expr;
+pub type BinOp = fn(Expr, Expr) -> Expr;
 
 #[derive(Debug, Clone)]
 pub enum RegParam {
