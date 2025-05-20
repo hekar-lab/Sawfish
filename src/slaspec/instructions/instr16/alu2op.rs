@@ -3,9 +3,7 @@ use itertools::Itertools;
 use crate::slaspec::instructions::common::{BinOp, UnOp};
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{
-    e_add, e_arshft, e_bit_not, e_copy, e_lshft, e_mult, e_neg, e_rshft,
-};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -60,8 +58,8 @@ impl OpAssignFactory {
             .set_field_type("opc", FieldType::Mask(param.mask))
             .set_field_type("src", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(e_copy(
-                Expr::field("dst"),
-                (param.op)(Expr::field("dst"), Expr::field("src")),
+                b_field("dst"),
+                (param.op)(b_field("dst"), b_field("src")),
             ))
     }
 }
@@ -69,11 +67,11 @@ impl OpAssignFactory {
 impl InstrFactory for OpAssignFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
         fn e_addshift1(lhs: Expr, rhs: Expr) -> Expr {
-            e_lshft(Expr::grp(e_add(lhs, rhs)), Expr::num(1))
+            e_lshft(b_grp(e_add(lhs, rhs)), b_num(1))
         }
 
         fn e_addshift2(lhs: Expr, rhs: Expr) -> Expr {
-            e_lshft(Expr::grp(e_add(lhs, rhs)), Expr::num(2))
+            e_lshft(b_grp(e_add(lhs, rhs)), b_num(2))
         }
 
         let params = vec![
@@ -104,10 +102,10 @@ impl DivideFactory {
                 "DIV{} ({{dst}}, {{src}})",
                 div_type.to_ascii_uppercase()
             ))
-            .add_pcode(Expr::mac2p(
+            .add_pcode(e_mac2p(
                 &format!("div{}", div_type.to_ascii_lowercase()),
-                Expr::field("dst"),
-                Expr::field("src"),
+                b_field("dst"),
+                b_field("src"),
             ))
     }
 }
@@ -148,8 +146,8 @@ impl MvDregToDregFactory {
                 if zext { "Z" } else { "X" }
             ))
             .add_pcode(e_copy(
-                Expr::field("dst"),
-                Expr::macp(if zext { "zext" } else { "sext" }, Expr::field("src")),
+                b_field("dst"),
+                e_macp(if zext { "zext" } else { "sext" }, b_field("src")),
             ))
     }
 }
@@ -180,7 +178,7 @@ impl UnaryFactory {
             .display(format!("{{dst}} = {}{{src}}", op_chr))
             .set_field_type("opc", FieldType::Mask(opc))
             .set_field_type("src", FieldType::Variable(RegisterSet::DReg))
-            .add_pcode(e_copy(Expr::field("dst"), op(Expr::field("src"))))
+            .add_pcode(e_copy(b_field("dst"), op(b_field("src"))))
     }
 }
 

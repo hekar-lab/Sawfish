@@ -1,7 +1,6 @@
 use crate::slaspec::instructions::common::RegParam;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{cs_pop, cs_push};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -56,7 +55,7 @@ impl PushPopFactory {
                 instr = instr
                     .set_field_type("reg", FieldType::Mask(mask))
                     .display(display(&id))
-                    .add_pcode(op(Expr::var(&id), size));
+                    .add_pcode(op(b_var(&id), size));
             }
             RegParam::Var { group: _, regset } => match regset {
                 RegisterSet::IReg | RegisterSet::MReg | RegisterSet::BReg | RegisterSet::LReg => {
@@ -76,13 +75,13 @@ impl PushPopFactory {
                             ]),
                         )
                         .display(display("{regL}"))
-                        .add_pcode(op(Expr::field("regL"), 4));
+                        .add_pcode(op(b_field("regL"), 4));
                 }
                 _ => {
                     instr = instr
                         .set_field_type("reg", FieldType::Variable(regset))
                         .display(display("{reg}"))
-                        .add_pcode(op(Expr::field("reg"), 4));
+                        .add_pcode(op(b_field("reg"), 4));
                 }
             },
         }

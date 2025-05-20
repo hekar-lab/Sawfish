@@ -1,8 +1,7 @@
 use itertools::Itertools;
 
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_copy, e_not};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -54,16 +53,12 @@ impl CCMvFactory {
                 "if {}CC {{dst}} = {{src}}",
                 if cc { "" } else { "!" },
             ))
-            .add_pcode(Expr::ifgoto(
-                if cc {
-                    e_not(Expr::reg("CC"))
-                } else {
-                    Expr::reg("CC")
-                },
-                Expr::label("do_nothing"),
+            .add_pcode(b_ifgoto(
+                if cc { e_not(b_reg("CC")) } else { b_reg("CC") },
+                b_label("do_nothing"),
             ))
-            .add_pcode(e_copy(Expr::field("dst"), Expr::field("src")))
-            .add_pcode(Expr::label("do_nothing"))
+            .add_pcode(e_copy(b_field("dst"), b_field("src")))
+            .add_pcode(b_label("do_nothing"))
     }
 }
 

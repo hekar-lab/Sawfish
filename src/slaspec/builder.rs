@@ -5,10 +5,7 @@ use std::path::Path;
 use super::globals::{ALIGNMENT, ENDIAN, RAM_SAPCE, REGISTER_SPACE};
 use super::instructions::core::InstrFamilyBuilder;
 
-use super::instructions::instr16::{
-    alu2op, brcc, cachectrl, cc2dreg, cc2stat, ccflag, ccmv, nop16, progctrl, ptr2op, pushpopmult,
-    pushpopreg, regmv, ujump,
-};
+use super::instructions::instr16::*;
 
 pub struct SLASpecBuilder {
     ifams_16: Vec<InstrFamilyBuilder>,

@@ -2,8 +2,7 @@ use itertools::Itertools;
 
 use crate::slaspec::instructions::common::BinOp;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_copy, e_eq, e_le, e_les, e_lt, e_lts};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -102,8 +101,8 @@ impl CompRegFactory {
                 },
             )
             .add_pcode(e_copy(
-                Expr::reg("CC"),
-                op.op_expr()(Expr::field("x"), Expr::field("y")),
+                b_reg("CC"),
+                op.op_expr()(b_field("x"), b_field("y")),
             ))
     }
 
@@ -112,10 +111,7 @@ impl CompRegFactory {
             .name("CompAccumulators")
             .display(format!("CC = A0 {} A1", op.op_str()))
             .set_field_type("opc", FieldType::Mask(opc))
-            .add_pcode(e_copy(
-                Expr::reg("CC"),
-                op.op_expr()(Expr::reg("A0"), Expr::reg("A1")),
-            ))
+            .add_pcode(e_copy(b_reg("CC"), op.op_expr()(b_reg("A0"), b_reg("A1"))))
     }
 }
 

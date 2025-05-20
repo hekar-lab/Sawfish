@@ -3,7 +3,7 @@ use itertools::Itertools;
 use crate::slaspec::instructions::common::RegParam;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::e_copy;
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -50,11 +50,11 @@ impl MvRegToRegFactory {
                 id,
                 size: _,
                 mask: _,
-            } => Expr::reg(id),
+            } => b_reg(id),
             RegParam::Var {
                 group: _,
                 regset: _,
-            } => Expr::field(field_id),
+            } => b_field(field_id),
         }
     }
 
@@ -62,9 +62,9 @@ impl MvRegToRegFactory {
         let var = Self::expr_reg(src, "src");
 
         if dst.size() > src.size() {
-            Expr::macp("sext", var)
+            e_macp("sext", var)
         } else if dst.size() < src.size() {
-            Expr::size(var, dst.size())
+            b_size(var, dst.size())
         } else {
             var
         }

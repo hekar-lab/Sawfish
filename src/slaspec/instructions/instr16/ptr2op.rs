@@ -1,7 +1,7 @@
 use crate::slaspec::instructions::common::BinOp;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_add, e_copy, e_lshft, e_rshft, e_sub};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -49,8 +49,8 @@ impl OpAssignFactory {
             .display(param.display.clone())
             .set_field_type("opc", FieldType::Mask(param.mask))
             .add_pcode(e_copy(
-                Expr::field("dst"),
-                (param.op)(Expr::field("dst"), Expr::field("src")),
+                b_field("dst"),
+                (param.op)(b_field("dst"), b_field("src")),
             ))
     }
 }
@@ -58,27 +58,27 @@ impl OpAssignFactory {
 impl InstrFactory for OpAssignFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
         fn e_addshift1(lhs: Expr, rhs: Expr) -> Expr {
-            e_lshft(Expr::grp(e_add(lhs, rhs)), Expr::num(1))
+            e_lshft(b_grp(e_add(lhs, rhs)), b_num(1))
         }
 
         fn e_addshift2(lhs: Expr, rhs: Expr) -> Expr {
-            e_lshft(Expr::grp(e_add(lhs, rhs)), Expr::num(2))
+            e_lshft(b_grp(e_add(lhs, rhs)), b_num(2))
         }
 
         fn e_lshft1(_lhs: Expr, rhs: Expr) -> Expr {
-            e_lshft(rhs, Expr::num(1))
+            e_lshft(rhs, b_num(1))
         }
 
         fn e_lshft2(_lhs: Expr, rhs: Expr) -> Expr {
-            e_lshft(rhs, Expr::num(2))
+            e_lshft(rhs, b_num(2))
         }
 
         fn e_rshft1(_lhs: Expr, rhs: Expr) -> Expr {
-            e_rshft(rhs, Expr::num(1))
+            e_rshft(rhs, b_num(1))
         }
 
         fn e_rshft2(_lhs: Expr, rhs: Expr) -> Expr {
-            e_rshft(rhs, Expr::num(2))
+            e_rshft(rhs, b_num(2))
         }
 
         let params = vec![

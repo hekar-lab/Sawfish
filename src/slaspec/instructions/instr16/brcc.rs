@@ -1,8 +1,7 @@
 use itertools::Itertools;
 
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{cs_ifgoto, e_add, e_copy, e_mult, e_not};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -39,23 +38,16 @@ impl BranchCCFactory {
             .set_field_type("t", FieldType::Mask(cc as u16))
             .set_field_type("b", FieldType::Mask(branch_pred as u16))
             .add_action(e_copy(
-                Expr::var(addr_var),
-                e_add(
-                    Expr::var("inst_start"),
-                    e_mult(Expr::field("off"), Expr::num(2)),
-                ),
+                b_var(addr_var),
+                e_add(b_var("inst_start"), e_mult(b_field("off"), b_num(2))),
             ))
             .add_pcode(e_copy(
-                Expr::local(addr_ptr_var, 4),
-                Expr::ptr(Expr::size(Expr::var(addr_var), 4), 4),
+                e_local(addr_ptr_var, 4),
+                b_ptr(b_size(b_var(addr_var), 4), 4),
             ))
             .add_pcode(cs_ifgoto(
-                if cc {
-                    Expr::reg("CC")
-                } else {
-                    e_not(Expr::reg("CC"))
-                },
-                Expr::var(addr_ptr_var),
+                if cc { b_reg("CC") } else { e_not(b_reg("CC")) },
+                b_var(addr_ptr_var),
             ))
     }
 }

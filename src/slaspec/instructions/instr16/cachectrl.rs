@@ -1,6 +1,5 @@
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{cs_assign_by, e_add};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -45,11 +44,11 @@ impl CacheCtrlFactory {
                 pcodeop.to_uppercase(),
                 if post_inc { "++" } else { "" }
             ))
-            .add_pcode(Expr::line(
-                Expr::macp(pcodeop, Expr::field("reg")),
+            .add_pcode(b_line(
+                e_macp(pcodeop, b_field("reg")),
                 if post_inc {
-                    Some(Expr::line(
-                        cs_assign_by(e_add, Expr::field("reg"), Expr::num(0x20)),
+                    Some(b_line(
+                        cs_assign_by(e_add, b_field("reg"), b_num(0x20)),
                         None,
                     ))
                 } else {

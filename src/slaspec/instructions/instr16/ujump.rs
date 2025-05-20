@@ -1,6 +1,5 @@
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_add, e_copy, e_mult};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -29,16 +28,10 @@ impl InstrFactory for JumpAbsFactory {
                 .name("JumpAbs")
                 .display(format!("JUMP.S {{${addr_var}}}"))
                 .add_action(e_copy(
-                    Expr::var(addr_var),
-                    e_add(
-                        Expr::var("inst_start"),
-                        e_mult(Expr::field("off"), Expr::num(2)),
-                    ),
+                    b_var(addr_var),
+                    e_add(b_var("inst_start"), e_mult(b_field("off"), b_num(2))),
                 ))
-                .add_pcode(Expr::goto(Expr::indirect(Expr::ptr(
-                    Expr::size(Expr::var(addr_var), 4),
-                    4,
-                )))),
+                .add_pcode(b_goto(b_indirect(b_ptr(b_size(b_var(addr_var), 4), 4)))),
         ]
     }
 }

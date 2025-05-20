@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{cs_mline, cs_pop, cs_push};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -73,7 +73,7 @@ impl PushPopFactory {
             .add_pcode(cs_mline(
                 range
                     .iter()
-                    .map(|i| op(Expr::reg(&format!("R{i}")), 4))
+                    .map(|i| op(b_reg(&format!("R{i}")), 4))
                     .collect::<VecDeque<Expr>>(),
             ))
     }
@@ -96,7 +96,7 @@ impl PushPopFactory {
             .add_pcode(cs_mline(
                 range
                     .iter()
-                    .map(|i| op(Expr::reg(&format!("P{i}")), 4))
+                    .map(|i| op(b_reg(&format!("P{i}")), 4))
                     .collect::<VecDeque<Expr>>(),
             ))
     }

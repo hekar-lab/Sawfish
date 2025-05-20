@@ -1,10 +1,7 @@
 use crate::slaspec::instructions::common::BinOp;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{
-    cs_assign_by, e_and, e_bit_and, e_bit_not, e_bit_or, e_bit_xor, e_copy, e_lshft, e_or, e_rshft,
-    e_xor,
-};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -60,11 +57,11 @@ struct MvStatToCCFactory();
 impl MvStatToCCFactory {
     fn astat_flag() -> Expr {
         e_bit_and(
-            Expr::grp(e_rshft(
-                Expr::size(Expr::reg("ASTAT"), 1),
-                Expr::size(Expr::field("cbit"), 1),
+            b_grp(e_rshft(
+                b_size(b_reg("ASTAT"), 1),
+                b_size(b_field("cbit"), 1),
             )),
-            Expr::num(0x1),
+            b_num(0x1),
         )
     }
 
@@ -75,9 +72,9 @@ impl MvStatToCCFactory {
             .set_field_type("d", FieldType::Mask(0x0))
             .display(format!("CC {} {{cbit}}", ccop.to_str()))
             .add_pcode(e_copy(
-                Expr::reg("CC"),
+                b_reg("CC"),
                 match ccop.to_s2c_op() {
-                    Some(op) => op(Expr::reg("CC"), Expr::grp(Self::astat_flag())),
+                    Some(op) => op(b_reg("CC"), b_grp(Self::astat_flag())),
                     None => Self::astat_flag(),
                 },
             ))
@@ -100,14 +97,11 @@ struct MvCCToStatFactory();
 
 impl MvCCToStatFactory {
     fn cc_flag() -> Expr {
-        Expr::grp(e_lshft(
-            Expr::macp("zext", Expr::reg("CC")),
-            Expr::field("cbit"),
-        ))
+        b_grp(e_lshft(e_macp("zext", b_reg("CC")), b_field("cbit")))
     }
 
     fn cc_mask() -> Expr {
-        Expr::grp(e_lshft(Expr::num(0x1), Expr::field("cbit")))
+        b_grp(e_lshft(b_num(0x1), b_field("cbit")))
     }
 
     fn base_instr(ifam: &InstrFamilyBuilder, ccop: CCOp) -> InstrBuilder {
@@ -118,18 +112,18 @@ impl MvCCToStatFactory {
             .display(format!("{{cbit}} {} CC", ccop.to_str()))
             .add_pcode(match ccop {
                 CCOp::Set => e_copy(
-                    Expr::reg("ASTAT"),
+                    b_reg("ASTAT"),
                     e_bit_or(
-                        Expr::grp(e_bit_and(Expr::reg("ASTAT"), e_bit_not(Self::cc_mask()))),
+                        b_grp(e_bit_and(b_reg("ASTAT"), e_bit_not(Self::cc_mask()))),
                         Self::cc_flag(),
                     ),
                 ),
-                CCOp::Or => cs_assign_by(e_bit_or, Expr::reg("ASTAT"), Self::cc_flag()),
+                CCOp::Or => cs_assign_by(e_bit_or, b_reg("ASTAT"), Self::cc_flag()),
                 CCOp::And => e_copy(
-                    Expr::reg("ASTAT"),
-                    e_bit_and(Expr::reg("ASTAT"), e_bit_not(Self::cc_flag())),
+                    b_reg("ASTAT"),
+                    e_bit_and(b_reg("ASTAT"), e_bit_not(Self::cc_flag())),
                 ),
-                CCOp::Xor => cs_assign_by(e_bit_xor, Expr::reg("ASTAT"), Self::cc_flag()),
+                CCOp::Xor => cs_assign_by(e_bit_xor, b_reg("ASTAT"), Self::cc_flag()),
             })
     }
 }

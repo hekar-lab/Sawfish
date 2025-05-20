@@ -1,6 +1,5 @@
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
-use crate::slaspec::instructions::expr_util::{e_copy, e_ne, e_not};
+use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -30,33 +29,24 @@ impl InstrFactory for CCFactory {
                 .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
                 .name("CCToDreg")
                 .display("{reg} = CC".to_string())
-                .add_pcode(e_copy(
-                    Expr::field("reg"),
-                    Expr::macp("zext", Expr::reg("CC")),
-                )),
+                .add_pcode(e_copy(b_field("reg"), e_macp("zext", b_reg("CC")))),
             InstrBuilder::new(ifam)
                 .set_field_type("opc", FieldType::Mask(0x1))
                 .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
                 .name("MvToCC")
                 .display("CC = {reg}".to_string())
-                .add_pcode(e_copy(
-                    Expr::reg("CC"),
-                    e_ne(Expr::field("reg"), Expr::num(0)),
-                )),
+                .add_pcode(e_copy(b_reg("CC"), e_ne(b_field("reg"), b_num(0)))),
             InstrBuilder::new(ifam)
                 .set_field_type("opc", FieldType::Mask(0x2))
                 .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
                 .name("CCToDreg")
                 .display("{reg} = !CC".to_string())
-                .add_pcode(e_copy(
-                    Expr::field("reg"),
-                    Expr::macp("zext", e_not(Expr::reg("CC"))),
-                )),
+                .add_pcode(e_copy(b_field("reg"), e_macp("zext", e_not(b_reg("CC"))))),
             InstrBuilder::new(ifam)
                 .set_field_type("opc", FieldType::Mask(0x3))
                 .name("MvToCC")
                 .display("CC = !CC".to_string())
-                .add_pcode(e_copy(Expr::reg("CC"), e_not(Expr::reg("CC")))),
+                .add_pcode(e_copy(b_reg("CC"), e_not(b_reg("CC")))),
         ]
     }
 }

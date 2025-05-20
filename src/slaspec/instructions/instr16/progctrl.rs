@@ -2,11 +2,11 @@ use crate::slaspec::{
     globals::IMASK,
     instructions::{
         core::{InstrBuilder, InstrFactory, InstrFamilyBuilder},
-        expr::Expr,
-        expr_util::{e_add, e_bit_or, e_copy, e_ne},
         pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet},
     },
 };
+
+use crate::slaspec::instructions::expr_util::*;
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
@@ -48,7 +48,7 @@ impl ReturnFactory {
             .set_field_type("reg", FieldType::Mask(regmask))
             .name("Return")
             .display(format!("RT{retreg}"))
-            .add_pcode(Expr::ret(Expr::reg(&format!("RET{retreg}"))))
+            .add_pcode(e_ret(b_reg(&format!("RET{retreg}"))))
     }
 }
 
@@ -80,7 +80,7 @@ impl SyncModeFactory {
             .set_field_type("reg", FieldType::Mask(reg))
             .name(name)
             .display(pcodeop.to_uppercase())
-            .add_pcode(Expr::mac(pcodeop))
+            .add_pcode(e_mac(pcodeop))
     }
 }
 
@@ -119,10 +119,7 @@ impl IMaskFactory {
         reg_instr(InstrBuilder::new(ifam))
             .name("IMaskMv")
             .set_field_type("regL", FieldType::Variable(RegisterSet::DReg))
-            .add_pcode(e_copy(
-                Expr::local(IMaskFactory::IMASK_VAR, 4),
-                Expr::var(IMASK),
-            ))
+            .add_pcode(e_copy(e_local(IMaskFactory::IMASK_VAR, 4), b_var(IMASK)))
     }
 }
 
@@ -133,19 +130,16 @@ impl InstrFactory for IMaskFactory {
                 .set_field_type("opc", FieldType::Mask(0x3))
                 .display("CLI {regL}".to_string())
                 .add_pcode(e_copy(
-                    Expr::field("regL"),
-                    Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
+                    b_field("regL"),
+                    b_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
                 ))
-                .add_pcode(e_copy(
-                    Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
-                    Expr::num(0),
-                )),
+                .add_pcode(e_copy(b_ptr(b_var(IMaskFactory::IMASK_VAR), 4), b_num(0))),
             IMaskFactory::base_instr(ifam)
                 .set_field_type("opc", FieldType::Mask(0x4))
                 .display("STI {regL}".to_string())
                 .add_pcode(e_copy(
-                    Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
-                    Expr::field("regL"),
+                    b_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
+                    b_field("regL"),
                 )),
         ]
     }
@@ -163,10 +157,10 @@ impl JumpFactory {
         goto_instr(ifam)
             .name("Jump")
             .display(format!("JUMP ({}{{regL}})", if pc { "PC + " } else { "" }))
-            .add_pcode(Expr::goto(Expr::indirect(if pc {
-                e_add(Expr::field("regL"), Expr::reg("PC"))
+            .add_pcode(b_goto(b_indirect(if pc {
+                e_add(b_field("regL"), b_reg("PC"))
             } else {
-                Expr::field("regL")
+                b_field("regL")
             })))
     }
 }
@@ -187,11 +181,11 @@ impl CallFactory {
         goto_instr(ifam)
             .name("Call")
             .display(format!("CALL ({}{{regL}})", if pc { "PC + " } else { "" }))
-            .add_pcode(e_copy(Expr::reg("RETS"), Expr::var("inst_next")))
-            .add_pcode(Expr::call(if pc {
-                e_add(Expr::field("regL"), Expr::reg("PC"))
+            .add_pcode(e_copy(b_reg("RETS"), b_var("inst_next")))
+            .add_pcode(e_call(if pc {
+                e_add(b_field("regL"), b_reg("PC"))
             } else {
-                Expr::field("regL")
+                b_field("regL")
             }))
     }
 }
@@ -214,7 +208,7 @@ impl RaiseFactory {
             .set_field_type("opc", FieldType::Mask(opc_mask))
             .name("Raise")
             .display(format!("{} {{reg}}", op.to_uppercase()))
-            .add_pcode(Expr::macp(op, Expr::size(Expr::field("reg"), 1)))
+            .add_pcode(e_macp(op, b_size(b_field("reg"), 1)))
     }
 }
 
@@ -237,20 +231,17 @@ impl InstrFactory for TestSetFactory {
                 .set_field_type("opc", FieldType::Mask(0xb))
                 .name("TestSet")
                 .display("TESTSET ({regL})".to_string())
-                .add_pcode(e_copy(
-                    Expr::local("testVal", 1),
-                    Expr::ptr(Expr::field("regL"), 1),
+                .add_pcode(e_copy(e_local("testVal", 1), b_ptr(b_field("regL"), 1)))
+                .add_pcode(e_copy(b_reg("CC"), b_num(0x0)))
+                .add_pcode(b_ifgoto(
+                    e_ne(b_var("testVal"), b_num(0x0)),
+                    b_label("is_set"),
                 ))
-                .add_pcode(e_copy(Expr::reg("CC"), Expr::num(0x0)))
-                .add_pcode(Expr::ifgoto(
-                    e_ne(Expr::var("testVal"), Expr::num(0x0)),
-                    Expr::label("is_set"),
-                ))
-                .add_pcode(e_copy(Expr::reg("CC"), Expr::num(0x1)))
-                .add_pcode(Expr::label("is_set"))
+                .add_pcode(e_copy(b_reg("CC"), b_num(0x1)))
+                .add_pcode(b_label("is_set"))
                 .add_pcode(e_copy(
-                    Expr::ptr(Expr::field("regL"), 1),
-                    e_bit_or(Expr::var("testVal"), Expr::num(0x80)),
+                    b_ptr(b_field("regL"), 1),
+                    e_bit_or(b_var("testVal"), b_num(0x80)),
                 )),
         ]
     }
@@ -266,15 +257,12 @@ impl InstrFactory for SyncFactory {
                 .set_field_type("opc", FieldType::Mask(0xc))
                 .name("Sync")
                 .display("STI IDLE {regL}".to_string())
+                .add_pcode(e_copy(e_local(IMaskFactory::IMASK_VAR, 4), b_var(IMASK)))
                 .add_pcode(e_copy(
-                    Expr::local(IMaskFactory::IMASK_VAR, 4),
-                    Expr::var(IMASK),
+                    b_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
+                    b_field("regL"),
                 ))
-                .add_pcode(e_copy(
-                    Expr::ptr(Expr::var(IMaskFactory::IMASK_VAR), 4),
-                    Expr::field("regL"),
-                ))
-                .add_pcode(Expr::mac("idle")),
+                .add_pcode(e_mac("idle")),
         ]
     }
 }
