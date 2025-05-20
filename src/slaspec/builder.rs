@@ -16,6 +16,7 @@ pub struct SLASpecBuilder {
 impl SLASpecBuilder {
     pub fn new() -> Self {
         let mut ifams_16: Vec<InstrFamilyBuilder> = vec![
+            // MAIN_16A
             nop16::instr_fam(),
             progctrl::instr_fam(),
             pushpopreg::instr_fam(),
@@ -33,6 +34,8 @@ impl SLASpecBuilder {
             logi2op::instr_fam(),
             comp3op::instr_fam(),
             compi2op::instr_fam(),
+            // MAIN_16B
+            ldstpmod::instr_fam(),
         ];
 
         for ifam in ifams_16.iter_mut() {
