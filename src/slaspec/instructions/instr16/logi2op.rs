@@ -12,7 +12,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ProtoPattern::new(vec![
             ProtoField::new("sig", FieldType::Mask(0x09), 5),
             ProtoField::new("opc", FieldType::Blank, 3),
-            ProtoField::new("src", FieldType::UImmVal, 3),
+            ProtoField::new("src", FieldType::UImmVal, 5),
             ProtoField::new("dst", FieldType::Variable(RegisterSet::DReg), 3),
         ]),
     );

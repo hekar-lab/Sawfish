@@ -31,6 +31,7 @@ impl SLASpecBuilder {
             alu2op::instr_fam(),
             ptr2op::instr_fam(),
             logi2op::instr_fam(),
+            comp3op::instr_fam(),
         ];
 
         for ifam in ifams_16.iter_mut() {
