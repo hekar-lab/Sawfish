@@ -7,6 +7,7 @@ pub mod ccflag;
 pub mod ccmv;
 pub mod comp3op;
 pub mod compi2op;
+pub mod ldst;
 pub mod ldstpmod;
 pub mod logi2op;
 pub mod nop16;

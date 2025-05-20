@@ -2,7 +2,7 @@ use std::hash::Hash;
 
 use super::util::capitalize;
 
-#[derive(Debug, Clone, PartialEq, Hash, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, PartialOrd, Ord)]
 pub enum RegisterSet {
     DReg,
     DRegL,
