@@ -40,7 +40,7 @@ impl Size {
         }
     }
     fn name(&self) -> String {
-        format!("M{}bit", self.bytes() * 8)
+        format!("M{:02}bit", self.bytes() * 8)
     }
 
     fn display(&self) -> String {

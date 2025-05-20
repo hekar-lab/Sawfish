@@ -37,6 +37,7 @@ impl SLASpecBuilder {
             // MAIN_16B
             ldstpmod::instr_fam(),
             ldst::instr_fam(),
+            ldp::instr_fam(),
         ];
 
         for ifam in ifams_16.iter_mut() {
