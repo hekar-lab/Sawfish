@@ -1,5 +1,4 @@
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
@@ -11,7 +10,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ProtoPattern::new(vec![
             ProtoField::new("sig", FieldType::Mask(0x48), 7),
             ProtoField::new("aop", FieldType::Blank, 2),
-            ProtoField::new("sig2", FieldType::Mask(0x1), 1),
+            ProtoField::new("one", FieldType::Mask(0x1), 1),
             ProtoField::new("ptr", FieldType::Variable(RegisterSet::PReg), 3),
             ProtoField::new("reg", FieldType::Variable(RegisterSet::PReg), 3),
         ]),
