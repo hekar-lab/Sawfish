@@ -6,6 +6,7 @@ pub mod cc2stat;
 pub mod ccflag;
 pub mod ccmv;
 pub mod comp3op;
+pub mod compi2op;
 pub mod logi2op;
 pub mod nop16;
 pub mod progctrl;
