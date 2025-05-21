@@ -12,6 +12,7 @@ pub mod dagmodim;
 pub mod dspldst;
 pub mod ldp;
 pub mod ldst;
+pub mod ldstii;
 pub mod ldstpmod;
 pub mod logi2op;
 pub mod nop16;
