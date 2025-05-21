@@ -7,6 +7,7 @@ pub mod ccflag;
 pub mod ccmv;
 pub mod comp3op;
 pub mod compi2op;
+pub mod dagmodim;
 pub mod dspldst;
 pub mod ldp;
 pub mod ldst;
