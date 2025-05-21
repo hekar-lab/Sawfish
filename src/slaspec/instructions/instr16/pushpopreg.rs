@@ -1,7 +1,7 @@
 use crate::slaspec::instructions::common::RegParam;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr_util::*;
-use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
+use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
@@ -45,46 +45,22 @@ impl PushPopFactory {
             Self::pop_display
         };
 
-        match param {
+        instr = param.set_field(instr, "reg");
+
+        instr = match param {
             RegParam::Fixed {
                 group: _,
                 id,
                 size,
-                mask,
-            } => {
-                instr = instr
-                    .set_field_type("reg", FieldType::Mask(mask))
-                    .display(display(&id))
-                    .add_pcode(op(b_var(&id), size));
-            }
-            RegParam::Var { group: _, regset } => match regset {
-                RegisterSet::IReg | RegisterSet::MReg | RegisterSet::BReg | RegisterSet::LReg => {
-                    instr = instr
-                        .split_field(
-                            "reg",
-                            ProtoPattern::new(vec![
-                                ProtoField::new(
-                                    "regH",
-                                    FieldType::Mask(match regset {
-                                        RegisterSet::IReg | RegisterSet::BReg => 0x0,
-                                        _ => 0x1,
-                                    }),
-                                    1,
-                                ),
-                                ProtoField::new("regL", FieldType::Variable(regset), 2),
-                            ]),
-                        )
-                        .display(display("{regL}"))
-                        .add_pcode(op(b_field("regL"), 4));
-                }
-                _ => {
-                    instr = instr
-                        .set_field_type("reg", FieldType::Variable(regset))
-                        .display(display("{reg}"))
-                        .add_pcode(op(b_field("reg"), 4));
-                }
-            },
-        }
+                mask: _,
+            } => instr.display(display(&id)).add_pcode(op(b_var(&id), size)),
+            RegParam::Var {
+                group: _,
+                regset: _,
+            } => instr
+                .display(display(&format!("{{{}}}", param.get_field_id("reg"))))
+                .add_pcode(op(b_field(&param.get_field_id("reg")), 4)),
+        };
 
         instr
     }

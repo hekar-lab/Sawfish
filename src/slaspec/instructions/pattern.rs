@@ -159,6 +159,14 @@ impl ProtoField {
             bit_range: BitRange::new(start, start + self.size - 1),
         }
     }
+
+    pub fn to_field_end(&self, end: usize) -> Field {
+        Field {
+            id: self.id.clone(),
+            ftype: self.ftype.clone(),
+            bit_range: BitRange::new(end - (self.size - 1), end),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -301,15 +309,15 @@ impl Pattern {
             let field = &self.fields[wi][fi];
 
             if field.len() != split.len() {
-                println!("WARNING: Length are not matching for field splitting");
+                println!("WARNING: Lengths are not matching for field splitting");
                 return self;
             }
 
-            let mut start = self.fields[wi].remove(fi).bit_range.start;
+            let mut end: isize = self.fields[wi].remove(fi).bit_range.end as isize;
 
-            for proto in split.fields.iter().rev() {
-                let f = proto.to_field(start);
-                start = f.bit_range.end + 1;
+            for proto in split.fields.iter() {
+                let f = proto.to_field_end(end as usize);
+                end = f.bit_range.start as isize - 1;
 
                 self.fields[wi].insert(fi, f);
                 fi += 1;

@@ -44,7 +44,13 @@ impl LdStFactory {
             format!("Ld{}To{}", ptr_str, reg_str)
         };
 
-        let addr_str = "[{ptr}++{idx}]";
+        let addr_str = format!(
+            "{}[{{ptr}}++{{idx}}]",
+            match aop {
+                1 | 2 => "W",
+                _ => "",
+            }
+        );
         let display = if store {
             format!("{addr_str} = {{reg}}")
         } else {

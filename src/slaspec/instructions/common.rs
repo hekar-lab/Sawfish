@@ -1,6 +1,7 @@
 use super::{
+    core::InstrBuilder,
     expr::Expr,
-    pattern::{FieldType, RegisterSet},
+    pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet},
 };
 
 pub type UnOp = fn(Expr) -> Expr;
@@ -61,15 +62,49 @@ impl RegParam {
         }
     }
 
-    pub fn ftype(&self) -> FieldType {
+    pub fn set_field(&self, instr: InstrBuilder, field_id: &str) -> InstrBuilder {
         match self {
             RegParam::Fixed {
                 group: _,
                 id: _,
                 size: _,
                 mask,
-            } => FieldType::Mask(*mask),
-            RegParam::Var { group: _, regset } => FieldType::Variable(regset.clone()),
+            } => instr.set_field_type(field_id, FieldType::Mask(*mask)),
+            RegParam::Var { group: _, regset } => match regset {
+                RegisterSet::IReg | RegisterSet::MReg | RegisterSet::BReg | RegisterSet::LReg => {
+                    instr.split_field(
+                        field_id,
+                        ProtoPattern::new(vec![
+                            ProtoField::new(
+                                &format!("{field_id}H"),
+                                FieldType::Mask(match regset {
+                                    RegisterSet::IReg | RegisterSet::BReg => 0x0,
+                                    _ => 0x1,
+                                }),
+                                1,
+                            ),
+                            ProtoField::new(
+                                &format!("{field_id}L"),
+                                FieldType::Variable(*regset),
+                                2,
+                            ),
+                        ]),
+                    )
+                }
+                _ => instr.set_field_type(field_id, FieldType::Variable(*regset)),
+            },
+        }
+    }
+
+    pub fn get_field_id(&self, field_id: &str) -> String {
+        match self {
+            RegParam::Var { group: _, regset } => match regset {
+                RegisterSet::IReg | RegisterSet::MReg | RegisterSet::BReg | RegisterSet::LReg => {
+                    format!("{field_id}L")
+                }
+                _ => field_id.to_string(),
+            },
+            _ => field_id.to_string(),
         }
     }
 

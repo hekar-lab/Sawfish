@@ -59,7 +59,7 @@ impl MvRegToRegFactory {
     }
 
     fn adjust_size(dst: &RegParam, src: &RegParam) -> Expr {
-        let var = Self::expr_reg(src, "src");
+        let var = Self::expr_reg(src, &src.get_field_id("src"));
 
         if dst.size() > src.size() {
             e_macp("sext", var)
@@ -71,21 +71,25 @@ impl MvRegToRegFactory {
     }
 
     fn base_instr(ifam: &InstrFamilyBuilder, dst: &RegParam, src: &RegParam) -> InstrBuilder {
-        InstrBuilder::new(ifam)
+        let mut instr = InstrBuilder::new(ifam)
             .name("MvRegToReg")
             .set_field_type("gd", FieldType::Mask(dst.grp()))
-            .set_field_type("gs", FieldType::Mask(src.grp()))
-            .set_field_type("dst", dst.ftype())
-            .set_field_type("src", src.ftype())
+            .set_field_type("gs", FieldType::Mask(src.grp()));
+
+        instr = dst.set_field(instr, "dst");
+        instr = src.set_field(instr, "src");
+        instr = instr
             .display(format!(
                 "{} = {}",
-                Self::display_reg(dst, "dst"),
-                Self::display_reg(src, "src")
+                Self::display_reg(dst, &dst.get_field_id("dst")),
+                Self::display_reg(src, &src.get_field_id("src"))
             ))
             .add_pcode(e_copy(
-                Self::expr_reg(dst, "dst"),
+                Self::expr_reg(dst, &dst.get_field_id("dst")),
                 Self::adjust_size(dst, src),
-            ))
+            ));
+
+        instr
     }
 }
 

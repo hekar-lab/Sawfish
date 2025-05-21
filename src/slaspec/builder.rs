@@ -95,8 +95,11 @@ impl SLASpecBuilder {
         file.write_all("@include \"includes/registers.sinc\"\n\n".as_bytes())
             .unwrap();
 
-        file.write_all("@include \"includes/instructions.sinc\"\n".as_bytes())
+        file.write_all("@include \"includes/instructions.sinc\"\n\n".as_bytes())
             .unwrap();
+
+        file.write_all(":^All is All { build All; }\n".as_bytes())
+            .unwrap()
     }
 
     fn instr_file_inc(dir: &str, file: &str) -> String {

@@ -8,7 +8,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
         "Logi2Op",
         "Logic Binary Operations",
-        "p2o",
+        "l2o",
         ProtoPattern::new(vec![
             ProtoField::new("sig", FieldType::Mask(0x09), 5),
             ProtoField::new("opc", FieldType::Blank, 3),
@@ -40,7 +40,7 @@ impl BitTstFactory {
                 b_reg("CC"),
                 comp(
                     b_num(0),
-                    b_grp(e_and(
+                    b_grp(e_bit_and(
                         b_field("dst"),
                         b_grp(e_lshft(b_num(1), b_field("src"))),
                     )),

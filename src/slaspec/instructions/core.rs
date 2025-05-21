@@ -335,7 +335,7 @@ impl InstrFamilyBuilder {
 
     fn build_final_instr(&self) -> String {
         format!(
-            ":^{ifam} is {ifam} {{ build {ifam}; }}\n",
+            "All:^{ifam} is {ifam} {{ build {ifam}; }}\n",
             ifam = self.name()
         )
     }
