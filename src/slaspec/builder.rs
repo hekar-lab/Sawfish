@@ -6,6 +6,7 @@ use super::globals::{ALIGNMENT, ENDIAN, RAM_SAPCE, REGISTER_SPACE};
 use super::instructions::core::InstrFamilyBuilder;
 
 use super::instructions::instr16::*;
+use super::instructions::instr32::*;
 
 pub struct SLASpecBuilder {
     ifams_16: Vec<InstrFamilyBuilder>,
@@ -48,7 +49,7 @@ impl SLASpecBuilder {
             ifam.init_tokens_and_vars();
         }
 
-        let mut ifams_32: Vec<InstrFamilyBuilder> = vec![];
+        let mut ifams_32: Vec<InstrFamilyBuilder> = vec![nop32::instr_fam()];
 
         for ifam in ifams_32.iter_mut() {
             ifam.init_tokens_and_vars();

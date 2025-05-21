@@ -7,3 +7,4 @@ mod util;
 
 pub mod core;
 pub mod instr16;
+pub mod instr32;
