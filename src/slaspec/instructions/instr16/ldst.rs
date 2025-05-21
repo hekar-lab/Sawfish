@@ -188,6 +188,7 @@ impl LdStParams {
 
         vec![
             aop_fill(Size::Double, Op::Load, Ext::Zero, Reg::Dreg),
+            aop_fill(Size::Double, Op::Load, Ext::Signed, Reg::Preg),
             aop_fill(Size::Word, Op::Load, Ext::Zero, Reg::Dreg),
             aop_fill(Size::Word, Op::Load, Ext::Signed, Reg::Dreg),
             aop_fill(Size::Byte, Op::Load, Ext::Zero, Reg::Dreg),

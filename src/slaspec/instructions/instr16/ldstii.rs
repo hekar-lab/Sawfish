@@ -153,6 +153,7 @@ impl InstrFactory for LdStImmFactory {
             Self::base_instr(ifam, LdSt::Load, Op::Data),
             Self::base_instr(ifam, LdSt::Load, Op::WordZ),
             Self::base_instr(ifam, LdSt::Load, Op::WordX),
+            Self::base_instr(ifam, LdSt::Load, Op::Ptr),
             Self::base_instr(ifam, LdSt::Store, Op::Data),
             Self::base_instr(ifam, LdSt::Store, Op::WordZ),
             Self::base_instr(ifam, LdSt::Store, Op::Ptr),
