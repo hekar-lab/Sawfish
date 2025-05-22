@@ -1,4 +1,4 @@
-use super::pattern::Pattern;
+use super::{pattern::Pattern, util::capitalize};
 
 #[derive(Debug, Clone)]
 enum Token {
@@ -152,4 +152,24 @@ pub fn display_format(txt: &str, pattern: &Pattern, prefix: &str) -> (String, us
     }
 
     (out, var_count)
+}
+
+pub fn display_add_prefix(txt: &str, prefix: &str) -> String {
+    let mut scanner = Scanner::new(txt);
+    let tokens = scanner.scan();
+    let mut out = String::new();
+
+    for tok in tokens {
+        match &tok {
+            Token::Literal(s) => out += s,
+            Token::Variable(s) => {
+                out += &format!("{{${}{}}}", prefix, capitalize(s));
+            }
+            Token::Field(s) => {
+                out += &format!("{{{}{}}}", prefix, capitalize(s));
+            }
+        }
+    }
+
+    out
 }

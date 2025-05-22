@@ -120,8 +120,8 @@ impl MOp {
 
     fn expr(&self) -> Expr {
         match self {
-            Self::Dreg | Self::Mreg => b_ptr(b_field("i"), 4),
-            Self::DregL | Self::DregH => b_ptr(b_field("i"), 2),
+            Self::Dreg | Self::Mreg => b_ptr(e_rfield("i"), 4),
+            Self::DregL | Self::DregH => b_ptr(e_rfield("i"), 2),
         }
     }
 
@@ -143,7 +143,7 @@ impl DspLdStFactory {
             .set_field_type("w", FieldType::Mask(op as u16))
             .set_field_type("aop", FieldType::Mask(aop as u16))
             .set_field_type("reg", FieldType::Variable(mop.reg()))
-            .add_pcode(op.expr(mop.expr(), b_field("reg")));
+            .add_pcode(op.expr(mop.expr(), e_rfield("reg")));
 
         instr = match mop {
             MOp::Dreg => instr.set_field_type("m", FieldType::Mask(0x0)),
@@ -153,10 +153,10 @@ impl DspLdStFactory {
         };
 
         instr = match aop {
-            AddrOp::Inc => instr.add_pcode(cs_assign_by(e_add, b_field("i"), b_num(mop.size()))),
-            AddrOp::Dec => instr.add_pcode(cs_assign_by(e_sub, b_field("i"), b_num(mop.size()))),
+            AddrOp::Inc => instr.add_pcode(cs_assign_by(e_add, e_rfield("i"), b_num(mop.size()))),
+            AddrOp::Dec => instr.add_pcode(cs_assign_by(e_sub, e_rfield("i"), b_num(mop.size()))),
             AddrOp::None => instr,
-            AddrOp::IncM => instr.add_pcode(cs_assign_by(e_add, b_field("i"), b_field("m"))),
+            AddrOp::IncM => instr.add_pcode(cs_assign_by(e_add, e_rfield("i"), e_rfield("m"))),
         };
 
         instr

@@ -49,11 +49,11 @@ impl BinOpFactory {
                 }),
             )
             .add_pcode(e_copy(
-                b_field("dst"),
+                e_rfield("dst"),
                 if add {
-                    e_add(b_field("dst"), b_field("src"))
+                    e_add(e_rfield("dst"), e_field("src"))
                 } else {
-                    e_macp("sext", b_size(b_field("src"), 1))
+                    e_macp("sext", b_size(e_field("src"), 1))
                 },
             ))
     }

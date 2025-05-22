@@ -29,7 +29,7 @@ impl InstrFactory for JumpAbsFactory {
                 .display(format!("JUMP.S {{${addr_var}}}"))
                 .add_action(e_copy(
                     b_var(addr_var),
-                    e_add(b_var("inst_start"), e_mult(b_field("off"), b_num(2))),
+                    e_add(b_var("inst_start"), e_mult(e_field("off"), b_num(2))),
                 ))
                 .add_pcode(b_goto(b_indirect(b_ptr(b_size(b_var(addr_var), 4), 4)))),
         ]

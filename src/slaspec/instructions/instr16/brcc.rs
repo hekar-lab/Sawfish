@@ -39,7 +39,7 @@ impl BranchCCFactory {
             .set_field_type("b", FieldType::Mask(branch_pred as u16))
             .add_action(e_copy(
                 b_var(addr_var),
-                e_add(b_var("inst_start"), e_mult(b_field("off"), b_num(2))),
+                e_add(b_var("inst_start"), e_mult(e_field("off"), b_num(2))),
             ))
             .add_pcode(e_copy(
                 e_local(addr_ptr_var, 4),

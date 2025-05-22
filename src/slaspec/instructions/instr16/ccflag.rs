@@ -102,7 +102,10 @@ impl CompRegFactory {
             )
             .add_pcode(e_copy(
                 b_reg("CC"),
-                op.op_expr()(b_field("x"), b_field("y")),
+                op.op_expr()(
+                    e_rfield("x"),
+                    if imm { e_field("y") } else { e_rfield("y") },
+                ),
             ))
     }
 

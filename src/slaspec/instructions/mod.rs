@@ -8,3 +8,4 @@ mod util;
 pub mod core;
 pub mod instr16;
 pub mod instr32;
+pub mod instr64;

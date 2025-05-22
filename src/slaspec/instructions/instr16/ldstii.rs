@@ -120,8 +120,8 @@ impl LdSt {
     }
 
     fn expr(&self, op: Op) -> Expr {
-        let reg = b_field("reg");
-        let addr = b_ptr(b_grp(e_add(b_field("ptr"), b_var("imm"))), op.size());
+        let reg = e_rfield("reg");
+        let addr = b_ptr(b_grp(e_add(e_rfield("ptr"), b_var("imm"))), op.size());
         match self {
             LdSt::Load => e_copy(reg.clone(), op.expr_addr(addr.clone())),
             LdSt::Store => e_copy(addr, op.expr_reg(reg)),
@@ -141,7 +141,7 @@ impl LdStImmFactory {
             .set_field_type("reg", FieldType::Variable(op.regset()))
             .add_action(e_copy(
                 b_var("imm"),
-                e_mult(b_field("off"), b_num(op.size() as isize)),
+                e_mult(e_field("off"), b_num(op.size() as isize)),
             ))
             .add_pcode(w.expr(op))
     }

@@ -49,8 +49,8 @@ impl OpAssignFactory {
             .display(param.display.clone())
             .set_field_type("opc", FieldType::Mask(param.mask))
             .add_pcode(e_copy(
-                b_field("dst"),
-                (param.op)(b_field("dst"), b_field("src")),
+                e_rfield("dst"),
+                (param.op)(e_rfield("dst"), e_rfield("src")),
             ))
     }
 }

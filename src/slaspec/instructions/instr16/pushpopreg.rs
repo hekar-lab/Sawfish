@@ -59,7 +59,7 @@ impl PushPopFactory {
                 regset: _,
             } => instr
                 .display(display(&format!("{{{}}}", param.get_field_id("reg"))))
-                .add_pcode(op(b_field(&param.get_field_id("reg")), 4)),
+                .add_pcode(op(e_rfield(&param.get_field_id("reg")), 4)),
         };
 
         instr

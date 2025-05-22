@@ -25,8 +25,11 @@ pub fn b_grp(expr: Expr) -> Expr {
 }
 
 // Var operations
-pub fn b_field(id: &str) -> Expr {
-    Expr::Field { id: id.to_string() }
+pub fn b_field(id: &str, is_reg: bool) -> Expr {
+    Expr::Field {
+        id: id.to_string(),
+        is_reg,
+    }
 }
 
 pub fn b_var(id: &str) -> Expr {
@@ -123,6 +126,14 @@ pub fn b_un(op: Op, expr: Expr) -> Expr {
 
 //// Compound expressions
 // Var expressions
+
+pub fn e_field(id: &str) -> Expr {
+    b_field(id, false)
+}
+
+pub fn e_rfield(id: &str) -> Expr {
+    b_field(id, true)
+}
 
 pub fn e_local(var: &str, size: usize) -> Expr {
     b_local(b_var(var), size)

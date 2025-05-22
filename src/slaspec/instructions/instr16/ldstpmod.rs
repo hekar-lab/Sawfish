@@ -57,7 +57,7 @@ impl LdStFactory {
             format!("{{reg}} = {addr_str}")
         };
 
-        let addr_expr = b_ptr(b_field("ptr"), if aop == 0 { 4 } else { 2 });
+        let addr_expr = b_ptr(e_rfield("ptr"), if aop == 0 { 4 } else { 2 });
 
         InstrBuilder::new(ifam)
             .name(&name)
@@ -73,13 +73,13 @@ impl LdStFactory {
                 }),
             )
             .add_pcode(if store {
-                e_copy(addr_expr, b_field("reg"))
+                e_copy(addr_expr, e_rfield("reg"))
             } else {
-                e_copy(b_field("reg"), addr_expr)
+                e_copy(e_rfield("reg"), addr_expr)
             })
             .add_pcode(e_copy(
-                b_field("ptr"),
-                e_add(b_field("ptr"), b_field("idx")),
+                e_rfield("ptr"),
+                e_add(e_rfield("ptr"), e_rfield("idx")),
             ))
     }
 }
@@ -108,12 +108,15 @@ impl BitExtFactory {
             .set_field_type("aop", FieldType::Mask(0x3))
             .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(e_copy(
-                b_field("reg"),
-                e_macp(if sext { "sext" } else { "zext" }, b_ptr(b_field("ptr"), 2)),
+                e_rfield("reg"),
+                e_macp(
+                    if sext { "sext" } else { "zext" },
+                    b_ptr(e_rfield("ptr"), 2),
+                ),
             ))
             .add_pcode(e_copy(
-                b_field("ptr"),
-                e_add(b_field("ptr"), b_field("idx")),
+                e_rfield("ptr"),
+                e_add(e_rfield("ptr"), e_rfield("idx")),
             ))
     }
 }

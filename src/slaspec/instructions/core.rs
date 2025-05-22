@@ -30,6 +30,11 @@ impl InstrBuilder {
         }
     }
 
+    pub fn set_pattern(mut self, pattern: Pattern) -> Self {
+        self.pattern = pattern;
+        self
+    }
+
     pub fn pattern(&self) -> &Pattern {
         &self.pattern
     }
@@ -39,9 +44,17 @@ impl InstrBuilder {
         self
     }
 
+    pub fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
     pub fn display(mut self, display: String) -> Self {
         self.display = display;
         self
+    }
+
+    pub fn get_display(&self) -> String {
+        self.display.clone()
     }
 
     pub fn add_action(mut self, action: Expr) -> Self {
@@ -49,8 +62,26 @@ impl InstrBuilder {
         self
     }
 
+    pub fn get_actions(&self) -> Code {
+        self.actions.clone()
+    }
+
+    pub fn set_actions(mut self, actions: Code) -> Self {
+        self.actions = actions;
+        self
+    }
+
     pub fn add_pcode(mut self, pcode: Expr) -> Self {
         self.pcodes.add_expr(pcode);
+        self
+    }
+
+    pub fn get_pcodes(&self) -> Code {
+        self.pcodes.clone()
+    }
+
+    pub fn set_pcodes(mut self, pcodes: Code) -> Self {
+        self.pcodes = pcodes;
         self
     }
 
@@ -107,10 +138,6 @@ impl InstrBuilder {
             return actions;
         }
 
-        // for act in &self.actions {
-        //     actions += &format!("\n\t{};", code_format(act, &self.pattern, &self.prefix))
-        // }
-
         actions += &self.actions.build(&self.pattern, &self.prefix);
 
         format!("\n[{}\n]", actions)
@@ -123,10 +150,6 @@ impl InstrBuilder {
 
         let mut pcodes = String::new();
         let nl = if self.actions.is_empty() { "\n" } else { " " };
-
-        // for pc in &self.pcodes {
-        //     pcodes += &format!("\n\t{};", code_format(pc, &self.pattern, &self.prefix))
-        // }
 
         pcodes += &self.pcodes.build(&self.pattern, &self.prefix);
 
@@ -220,6 +243,10 @@ impl InstrFamilyBuilder {
 
     pub fn name(&self) -> String {
         self.name.clone()
+    }
+
+    pub fn instrs(&self) -> &Vec<InstrBuilder> {
+        &self.instructions
     }
 
     pub fn add_pcodeop(&mut self, pcodeop: &str) {
@@ -355,7 +382,7 @@ impl InstrFamilyBuilder {
         let mut instr_count = 0;
 
         for instr in &self.instructions {
-            let literal_desc = format!("{}Desc{}", self.name, instr_count);
+            let literal_desc = format!("{}Desc{:02X}", self.name, instr_count);
             let (build, alt_disp) = instr.build(literal_desc.clone());
             if alt_disp {
                 instr_str += &format!("{literal_desc}: \"{}\" is epsilon {{}}\n", instr.display);

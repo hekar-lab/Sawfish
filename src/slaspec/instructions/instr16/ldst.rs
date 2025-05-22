@@ -53,7 +53,7 @@ impl Size {
     }
 
     fn epxr(&self) -> Expr {
-        b_ptr(b_field("ptr"), self.bytes())
+        b_ptr(e_rfield("ptr"), self.bytes())
     }
 }
 
@@ -218,7 +218,7 @@ impl LdStFactory {
             .set_field_type("reg", FieldType::Variable(params.reg.regset()))
             .add_pcode(match params.op {
                 Op::Load => e_copy(
-                    b_field("reg"),
+                    e_rfield("reg"),
                     if params.size == Size::Double {
                         params.size.epxr()
                     } else {
@@ -227,14 +227,14 @@ impl LdStFactory {
                 ),
                 Op::Store => e_copy(
                     params.size.epxr(),
-                    b_size(b_field("reg"), params.size.bytes()),
+                    b_size(e_rfield("reg"), params.size.bytes()),
                 ),
             });
 
         let incr_expr = b_num(params.size.bytes() as isize);
         match params.aop {
-            AddrOp::Inc => instr = instr.add_pcode(cs_assign_by(e_add, b_field("ptr"), incr_expr)),
-            AddrOp::Dec => instr = instr.add_pcode(cs_assign_by(e_sub, b_field("ptr"), incr_expr)),
+            AddrOp::Inc => instr = instr.add_pcode(cs_assign_by(e_add, e_rfield("ptr"), incr_expr)),
+            AddrOp::Dec => instr = instr.add_pcode(cs_assign_by(e_sub, e_rfield("ptr"), incr_expr)),
             _ => {}
         }
 

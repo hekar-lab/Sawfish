@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use crate::slaspec::globals::DEFAULT_MEM;
 
-use super::pattern::Pattern;
+use super::{expr_util::*, pattern::Pattern, util::capitalize};
 
 #[derive(Debug, Clone)]
 pub enum Op {
@@ -75,6 +77,7 @@ pub enum Expr {
 
     Field {
         id: String,
+        is_reg: bool,
     },
     Var {
         id: String,
@@ -157,7 +160,7 @@ impl Expr {
                     }
                 );
             }
-            Expr::Field { id } => {
+            Expr::Field { id, is_reg: _ } => {
                 if let Some(f) = pattern.get_field(id) {
                     return format!("{}{}", prefix, f.name());
                 }
@@ -219,6 +222,63 @@ impl Expr {
 
         String::new()
     }
+
+    pub fn multify(self, prefix: &str, rhs: bool, regs: &mut HashSet<(bool, String)>) -> Expr {
+        match self {
+            Expr::Line { current, next } => b_line(
+                current.multify(prefix, rhs, regs),
+                if let Some(val) = next {
+                    Some(val.multify(prefix, rhs, regs))
+                } else {
+                    None
+                },
+            ),
+            Expr::Field { id, is_reg } => {
+                if is_reg && rhs {
+                    regs.insert((true, format!("{}{}", prefix, &capitalize(&id))));
+                    b_var(&format!("old_{}{}Reg", prefix, &capitalize(&id)))
+                } else {
+                    b_field(&format!("{}{}", prefix, &capitalize(&id)), is_reg)
+                }
+            }
+            Expr::Var { id } => b_var(&format!("{}{}", prefix, &capitalize(&id))),
+            Expr::Reg { id } => {
+                if rhs {
+                    regs.insert((false, id.clone()));
+                    b_var(&format!("old_{id}"))
+                } else {
+                    b_reg(&id)
+                }
+            }
+            Expr::Number { val } => b_num(val),
+            Expr::Macro { id, params } => b_mac(
+                &id,
+                params
+                    .into_iter()
+                    .map(|e| e.multify(prefix, rhs, regs))
+                    .collect(),
+            ),
+            Expr::Label { id } => b_label(&capitalize(&id)),
+            Expr::Indirect { val } => b_indirect(val.multify(prefix, rhs, regs)),
+            Expr::Local { var, size } => b_local(var.multify(prefix, rhs, regs), size),
+            Expr::Unary { op, expr } => b_un(op, expr.multify(prefix, rhs, regs)),
+            Expr::Binary { lhs, op, rhs } => b_bin(
+                lhs.multify(prefix, false, regs),
+                op,
+                rhs.multify(prefix, true, regs),
+            ),
+            Expr::Size { var, size } => b_size(var.multify(prefix, rhs, regs), size),
+            Expr::Ptr { addr, size } => b_ptr(addr.multify(prefix, rhs, regs), size),
+            Expr::Return { addr } => b_ret(addr.multify(prefix, rhs, regs)),
+            Expr::Goto { dest } => b_goto(dest.multify(prefix, rhs, regs)),
+            Expr::Call { addr } => b_call(addr.multify(prefix, rhs, regs)),
+            Expr::Group { expr } => b_grp(expr.multify(prefix, rhs, regs)),
+            Expr::IfGoto { cond, goto } => b_ifgoto(
+                cond.multify(prefix, rhs, regs),
+                goto.multify(prefix, rhs, regs),
+            ),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -254,5 +314,19 @@ impl Code {
         }
 
         out
+    }
+
+    pub fn multify(self, prefix: &str, rhs: bool, regs: &mut HashSet<(bool, String)>) -> Code {
+        Code {
+            exprs: self
+                .exprs
+                .into_iter()
+                .map(|e| e.multify(prefix, rhs, regs))
+                .collect(),
+        }
+    }
+
+    pub fn append(&mut self, mut code: Code) {
+        self.exprs.append(&mut code.exprs);
     }
 }

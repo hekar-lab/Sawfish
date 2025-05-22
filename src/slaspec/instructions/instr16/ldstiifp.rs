@@ -42,7 +42,7 @@ impl LdStImmFPFactory {
         };
 
         let addr_expr = b_ptr(b_grp(e_sub(b_reg("FP"), b_var("imm"))), 4);
-        let reg_expr = b_field("reg");
+        let reg_expr = e_rfield("reg");
 
         InstrBuilder::new(ifam)
             .name(&name)
@@ -59,7 +59,7 @@ impl LdStImmFPFactory {
             )
             .add_action(e_copy(
                 b_var("imm"),
-                e_sub(b_num(0x80), b_grp(e_lshft(b_field("off"), b_num(2)))),
+                e_sub(b_num(0x80), b_grp(e_lshft(e_field("off"), b_num(2)))),
             ))
             .add_pcode(if store {
                 e_copy(addr_expr, reg_expr)

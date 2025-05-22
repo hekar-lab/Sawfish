@@ -32,7 +32,7 @@ impl DagAddImmFactory {
             .set_field_type("opc", FieldType::Mask(op))
             .add_pcode(cs_assign_by(
                 if inc { e_add } else { e_sub },
-                b_field("i"),
+                e_rfield("i"),
                 b_num(val),
             ))
     }

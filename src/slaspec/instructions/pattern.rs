@@ -292,8 +292,24 @@ pub struct Pattern {
 }
 
 impl Pattern {
+    pub fn new(fields: [Vec<Field>; 4]) -> Self {
+        Pattern { fields }
+    }
+
     pub fn fields(&self) -> [Vec<Field>; 4] {
         self.fields.clone()
+    }
+
+    pub fn fields_prefix(&self, prefix: &str) -> [Vec<Field>; 4] {
+        let mut fields = self.fields.clone();
+
+        for word in &mut fields {
+            for field in word {
+                field.id = format!("{}{}", prefix, capitalize(&field.id));
+            }
+        }
+
+        fields
     }
 
     fn get_field_index(&self, field_id: &str) -> Option<(usize, usize)> {

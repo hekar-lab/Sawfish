@@ -41,8 +41,8 @@ impl BitTstFactory {
                 comp(
                     b_num(0),
                     b_grp(e_bit_and(
-                        b_field("dst"),
-                        b_grp(e_lshft(b_num(1), b_field("src"))),
+                        e_rfield("dst"),
+                        b_grp(e_lshft(b_num(1), e_field("src"))),
                     )),
                 ),
             ))
@@ -63,23 +63,23 @@ impl BitModFactory {
             .name("Shift_BitMod")
             .display(format!("{}({{dst}}, {{src}})", display))
             .set_field_type("opc", FieldType::Mask(opc))
-            .add_pcode(e_copy(b_field("dst"), expr))
+            .add_pcode(e_copy(e_rfield("dst"), expr))
     }
 }
 
 impl InstrFactory for BitModFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
         fn e_bitshift() -> Expr {
-            b_grp(e_lshft(b_num(1), b_field("src")))
+            b_grp(e_lshft(b_num(1), e_field("src")))
         }
 
         let params = [
-            ("BITSET", 0x2, e_bit_or(b_field("dst"), e_bitshift())),
-            ("BITTGL", 0x3, e_bit_xor(b_field("dst"), e_bitshift())),
+            ("BITSET", 0x2, e_bit_or(e_rfield("dst"), e_bitshift())),
+            ("BITTGL", 0x3, e_bit_xor(e_rfield("dst"), e_bitshift())),
             (
                 "BITCLR",
                 0x4,
-                e_bit_and(b_field("dst"), e_bit_not(e_bitshift())),
+                e_bit_and(e_rfield("dst"), e_bit_not(e_bitshift())),
             ),
         ];
 
@@ -104,7 +104,7 @@ impl ShiftFactory {
             .name(name)
             .display(format!("{{dst}} {} {{src}}", op_str))
             .set_field_type("opc", FieldType::Mask(opc))
-            .add_pcode(e_copy(b_field("dst"), op(b_field("dst"), b_field("src"))))
+            .add_pcode(e_copy(e_rfield("dst"), op(e_rfield("dst"), e_field("src"))))
     }
 }
 

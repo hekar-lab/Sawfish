@@ -57,7 +57,7 @@ impl CCMvFactory {
                 if cc { e_not(b_reg("CC")) } else { b_reg("CC") },
                 b_label("do_nothing"),
             ))
-            .add_pcode(e_copy(b_field("dst"), b_field("src")))
+            .add_pcode(e_copy(e_rfield("dst"), e_rfield("src")))
             .add_pcode(b_label("do_nothing"))
     }
 }

@@ -41,7 +41,10 @@ impl TernaryOpFactory {
             .set_field_type("dst", FieldType::Variable(reg.clone()))
             .set_field_type("src1", FieldType::Variable(reg.clone()))
             .set_field_type("src0", FieldType::Variable(reg.clone()))
-            .add_pcode(e_copy(b_field("dst"), op(b_field("src0"), b_field("src1"))))
+            .add_pcode(e_copy(
+                e_rfield("dst"),
+                op(e_rfield("src0"), e_rfield("src1")),
+            ))
     }
 }
 

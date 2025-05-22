@@ -45,10 +45,10 @@ impl CacheCtrlFactory {
                 if post_inc { "++" } else { "" }
             ))
             .add_pcode(b_line(
-                e_macp(pcodeop, b_field("reg")),
+                e_macp(pcodeop, e_rfield("reg")),
                 if post_inc {
                     Some(b_line(
-                        cs_assign_by(e_add, b_field("reg"), b_num(0x20)),
+                        cs_assign_by(e_add, e_rfield("reg"), b_num(0x20)),
                         None,
                     ))
                 } else {

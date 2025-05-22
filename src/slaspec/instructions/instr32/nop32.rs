@@ -10,8 +10,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         "mnop",
         [
             ProtoPattern::new(vec![
-                ProtoField::new("sigH", FieldType::Mask(0xc), 4),
-                ProtoField::new("m", FieldType::Blank, 1),
+                ProtoField::new("sigH", FieldType::Mask(0x18), 5),
                 ProtoField::new("x3", FieldType::Mask(0x003), 11),
             ]),
             ProtoPattern::new(vec![ProtoField::new("sigL", FieldType::Mask(0x1800), 16)]),

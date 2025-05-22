@@ -59,7 +59,7 @@ impl MvStatToCCFactory {
         e_bit_and(
             b_grp(e_rshft(
                 b_size(b_reg("ASTAT"), 1),
-                b_size(b_field("cbit"), 1),
+                b_size(e_rfield("cbit"), 1),
             )),
             b_num(0x1),
         )
@@ -97,11 +97,11 @@ struct MvCCToStatFactory();
 
 impl MvCCToStatFactory {
     fn cc_flag() -> Expr {
-        b_grp(e_lshft(e_macp("zext", b_reg("CC")), b_field("cbit")))
+        b_grp(e_lshft(e_macp("zext", b_reg("CC")), e_rfield("cbit")))
     }
 
     fn cc_mask() -> Expr {
-        b_grp(e_lshft(b_num(0x1), b_field("cbit")))
+        b_grp(e_lshft(b_num(0x1), e_rfield("cbit")))
     }
 
     fn base_instr(ifam: &InstrFamilyBuilder, ccop: CCOp) -> InstrBuilder {

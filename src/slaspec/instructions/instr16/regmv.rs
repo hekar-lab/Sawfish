@@ -54,7 +54,7 @@ impl MvRegToRegFactory {
             RegParam::Var {
                 group: _,
                 regset: _,
-            } => b_field(field_id),
+            } => e_rfield(field_id),
         }
     }
 

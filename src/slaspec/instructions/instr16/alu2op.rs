@@ -58,8 +58,8 @@ impl OpAssignFactory {
             .set_field_type("opc", FieldType::Mask(param.mask))
             .set_field_type("src", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(e_copy(
-                b_field("dst"),
-                (param.op)(b_field("dst"), b_field("src")),
+                e_rfield("dst"),
+                (param.op)(e_rfield("dst"), e_rfield("src")),
             ))
     }
 }
@@ -104,8 +104,8 @@ impl DivideFactory {
             ))
             .add_pcode(e_mac2p(
                 &format!("div{}", div_type.to_ascii_lowercase()),
-                b_field("dst"),
-                b_field("src"),
+                e_rfield("dst"),
+                e_rfield("src"),
             ))
     }
 }
@@ -146,8 +146,8 @@ impl MvDregToDregFactory {
                 if zext { "Z" } else { "X" }
             ))
             .add_pcode(e_copy(
-                b_field("dst"),
-                e_macp(if zext { "zext" } else { "sext" }, b_field("src")),
+                e_rfield("dst"),
+                e_macp(if zext { "zext" } else { "sext" }, e_rfield("src")),
             ))
     }
 }
@@ -178,7 +178,7 @@ impl UnaryFactory {
             .display(format!("{{dst}} = {}{{src}}", op_chr))
             .set_field_type("opc", FieldType::Mask(opc))
             .set_field_type("src", FieldType::Variable(RegisterSet::DReg))
-            .add_pcode(e_copy(b_field("dst"), op(b_field("src"))))
+            .add_pcode(e_copy(e_rfield("dst"), op(e_rfield("src"))))
     }
 }
 

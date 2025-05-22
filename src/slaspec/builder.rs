@@ -7,6 +7,7 @@ use super::instructions::core::InstrFamilyBuilder;
 
 use super::instructions::instr16::*;
 use super::instructions::instr32::*;
+use super::instructions::instr64::*;
 
 pub struct SLASpecBuilder {
     ifams_16: Vec<InstrFamilyBuilder>,
@@ -55,7 +56,9 @@ impl SLASpecBuilder {
             ifam.init_tokens_and_vars();
         }
 
-        let mut ifams_64: Vec<InstrFamilyBuilder> = vec![];
+        let mut ifams_64: Vec<InstrFamilyBuilder> = vec![
+            // multi::instr_fam()
+        ];
 
         for ifam in ifams_64.iter_mut() {
             ifam.init_tokens_and_vars();

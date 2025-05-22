@@ -37,8 +37,8 @@ impl DagAddFactory {
             .set_field_type("op", FieldType::Mask(dec as u16))
             .add_pcode(cs_assign_by(
                 if dec { e_sub } else { e_add },
-                b_field("i"),
-                b_field("m"),
+                e_rfield("i"),
+                e_rfield("m"),
             ))
     }
 }
