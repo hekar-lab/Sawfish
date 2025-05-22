@@ -2,7 +2,7 @@ use crate::slaspec::instructions::common::BinOp;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
-use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
+use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_16(
@@ -13,7 +13,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
             ProtoField::new("sig", FieldType::Mask(0x03), 8),
             ProtoField::new("d", FieldType::Blank, 1),
             ProtoField::new("op", FieldType::Blank, 2),
-            ProtoField::new("cbit", FieldType::UImmVal, 5),
+            ProtoField::new("cbit", FieldType::Variable(RegisterSet::CBit), 5),
         ]),
     );
 

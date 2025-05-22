@@ -15,6 +15,7 @@ pub enum RegisterSet {
     LReg,
     SyRg2,
     SyRg3,
+    CBit,
 }
 
 impl RegisterSet {
@@ -31,6 +32,7 @@ impl RegisterSet {
             Self::LReg => String::from("LReg"),
             Self::SyRg2 => String::from("SyRg2"),
             Self::SyRg3 => String::from("SyRg3"),
+            Self::CBit => String::from("CBIT"),
         }
     }
 
@@ -57,6 +59,18 @@ impl RegisterSet {
         regs.into_iter().map(|v| v.to_string()).collect()
     }
 
+    fn build_names_from(regs: Vec<&str>) -> Vec<String> {
+        regs.into_iter().map(|v| format!("\"{v}\"")).collect()
+    }
+
+    pub fn attach_type(&self) -> String {
+        match self {
+            Self::CBit => "names",
+            _ => "variables",
+        }
+        .to_string()
+    }
+
     pub fn regs(&self) -> Vec<String> {
         match self {
             Self::DReg => Self::build_regs("R", 8, None),
@@ -77,6 +91,12 @@ impl RegisterSet {
             ]),
             Self::SyRg3 => Self::build_regs_from(vec![
                 "USP", "SEQSTAT", "SYSCFG", "RETI", "RETX", "RETN", "RETE", "EMUDAT",
+            ]),
+            Self::CBit => Self::build_names_from(vec![
+                "AZ", "AN", "AC0COPY", "VCOPY", "_0x04", "CC", "AQ", "_0x07", "RND_MOD", "_0x09",
+                "_0x0a", "_0x0b", "AC0", "AC1", "_0x0e", "_0x0f", "AV0", "AV0S", "AV1", "AV1S",
+                "_0x14", "_0x15", "_0x16", "_0x17", "V", "VS", "_0x1a", "_0x1b", "_0x1c", "_0x1d",
+                "_0x1e", "_0x1f",
             ]),
         }
     }

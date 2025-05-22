@@ -1,7 +1,6 @@
 use itertools::Itertools;
 
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
-use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 

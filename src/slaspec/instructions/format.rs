@@ -129,22 +129,27 @@ impl Scanner {
     }
 }
 
-pub fn display_format(txt: &str, pattern: &Pattern, prefix: &str) -> String {
+pub fn display_format(txt: &str, pattern: &Pattern, prefix: &str) -> (String, usize) {
     let mut scanner = Scanner::new(txt);
     let tokens = scanner.scan();
     let mut out = String::new();
+    let mut var_count = 0;
 
     for tok in tokens {
         match &tok {
             Token::Literal(s) => out += &format!("\"{s}\""),
-            Token::Variable(s) => out += &s,
+            Token::Variable(s) => {
+                out += &s;
+                var_count += 1;
+            }
             Token::Field(s) => {
                 if let Some(f) = pattern.get_field(s) {
                     out += &format!("{}{}", prefix, f.name())
                 }
+                var_count += 1
             }
         }
     }
 
-    out
+    (out, var_count)
 }

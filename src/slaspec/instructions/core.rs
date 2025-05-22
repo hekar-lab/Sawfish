@@ -68,8 +68,15 @@ impl InstrBuilder {
         format!(":^\"{}\"", self.name)
     }
 
-    fn build_pattern(&self) -> String {
-        let mut pattern_str = String::from("\n\tis ");
+    fn build_pattern(&self, alt: bool, alt_display: &str) -> String {
+        let mut pattern_str = format!(
+            "\n\tis {}",
+            if alt {
+                format!("{alt_display} & ")
+            } else {
+                "".to_string()
+            }
+        );
 
         let words = self.pattern.fields();
         for word in words {
@@ -126,14 +133,21 @@ impl InstrBuilder {
         format!("{}{{{}\n}}", nl, pcodes)
     }
 
-    pub fn build(&self) -> String {
-        format!(
-            "{} {}{}{}{}",
-            self.build_name(),
-            display_format(&self.display, &self.pattern, &self.prefix),
-            self.build_pattern(),
-            self.build_action(),
-            self.build_pcode()
+    pub fn build(&self, alt_display: String) -> (String, bool) {
+        let (display, vars) = display_format(&self.display, &self.pattern, &self.prefix);
+        let empty_display = display.is_empty();
+        let no_vars = vars == 0;
+        let alt = no_vars && !empty_display;
+        (
+            format!(
+                "{} {}{}{}{}",
+                self.build_name(),
+                if alt { &alt_display } else { &display },
+                self.build_pattern(alt, &alt_display),
+                self.build_action(),
+                self.build_pcode()
+            ),
+            alt,
         )
     }
 }
@@ -302,10 +316,23 @@ impl InstrFamilyBuilder {
 
         for var in variables {
             if let FieldType::Variable(regset) = var.ftype() {
+                let regs = regset.regs();
+
                 var_str += &format!(
-                    "attach variables {} [{}];\n",
+                    "attach {} {} [{}];\n",
+                    regset.attach_type(),
                     var.token_name(&self.prefix),
-                    regset.regs().join(" ")
+                    if regs.len() <= 8 {
+                        regs.join(" ")
+                    } else {
+                        format!(
+                            "\n{}\n",
+                            regs.chunks(8)
+                                .map(|chunk| format!("\t{}", chunk.join(" ")))
+                                .collect::<Vec<String>>()
+                                .join("\n")
+                        )
+                    }
                 );
             }
         }
@@ -325,9 +352,16 @@ impl InstrFamilyBuilder {
 
     fn build_instructions(&self) -> String {
         let mut instr_str = String::new();
+        let mut instr_count = 0;
 
         for instr in &self.instructions {
-            instr_str += &format!("{}{}\n", self.name, instr.build());
+            let literal_desc = format!("{}Desc{}", self.name, instr_count);
+            let (build, alt_disp) = instr.build(literal_desc.clone());
+            if alt_disp {
+                instr_str += &format!("{literal_desc}: \"{}\" is epsilon {{}}\n", instr.display);
+            }
+            instr_str += &format!("{}{}\n\n", self.name, build);
+            instr_count += 1;
         }
 
         instr_str
@@ -335,7 +369,7 @@ impl InstrFamilyBuilder {
 
     fn build_final_instr(&self) -> String {
         format!(
-            "All:^{ifam} is {ifam} {{ build {ifam}; }}\n",
+            ":^{ifam} is {ifam} {{ build {ifam}; }}\n",
             ifam = self.name()
         )
     }
