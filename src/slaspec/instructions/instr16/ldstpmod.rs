@@ -57,7 +57,7 @@ impl LdStFactory {
             format!("{{reg}} = {addr_str}")
         };
 
-        let addr_expr = b_ptr(e_rfield("ptr"), if aop == 0 { 4 } else { 2 });
+        let addr_expr = e_ptr(e_rfield("ptr"), if aop == 0 { 4 } else { 2 });
 
         InstrBuilder::new(ifam)
             .name(&name)
@@ -111,7 +111,7 @@ impl BitExtFactory {
                 e_rfield("reg"),
                 e_macp(
                     if sext { "sext" } else { "zext" },
-                    b_ptr(e_rfield("ptr"), 2),
+                    e_ptr(e_rfield("ptr"), 2),
                 ),
             ))
             .add_pcode(e_copy(

@@ -53,7 +53,7 @@ impl Size {
     }
 
     fn epxr(&self) -> Expr {
-        b_ptr(e_rfield("ptr"), self.bytes())
+        e_ptr(e_rfield("ptr"), self.bytes())
     }
 }
 
@@ -100,8 +100,8 @@ impl Ext {
 
     fn expr(&self, e: Expr) -> Expr {
         match self {
-            Self::Zero => e_macp("zext", e),
-            Self::Signed => e_macp("sext", e),
+            Self::Zero => e_zext(e),
+            Self::Signed => e_sext(e),
         }
     }
 }

@@ -43,7 +43,7 @@ impl BranchCCFactory {
             ))
             .add_pcode(e_copy(
                 e_local(addr_ptr_var, 4),
-                b_ptr(b_size(b_var(addr_var), 4), 4),
+                e_ptr(b_size(b_var(addr_var), 4), 4),
             ))
             .add_pcode(cs_ifgoto(
                 if cc { b_reg("CC") } else { e_not(b_reg("CC")) },

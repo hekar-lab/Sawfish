@@ -120,8 +120,8 @@ impl MOp {
 
     fn expr(&self) -> Expr {
         match self {
-            Self::Dreg | Self::Mreg => b_ptr(e_rfield("i"), 4),
-            Self::DregL | Self::DregH => b_ptr(e_rfield("i"), 2),
+            Self::Dreg | Self::Mreg => e_ptr(e_rfield("i"), 4),
+            Self::DregL | Self::DregH => e_ptr(e_rfield("i"), 2),
         }
     }
 

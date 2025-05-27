@@ -73,8 +73,8 @@ impl Op {
 
     fn expr_addr(&self, expr: Expr) -> Expr {
         match self {
-            Op::WordZ => e_macp("zext", expr),
-            Op::WordX => e_macp("sext", expr),
+            Op::WordZ => e_zext(expr),
+            Op::WordX => e_sext(expr),
             _ => expr,
         }
     }
@@ -121,7 +121,7 @@ impl LdSt {
 
     fn expr(&self, op: Op) -> Expr {
         let reg = e_rfield("reg");
-        let addr = b_ptr(b_grp(e_add(e_rfield("ptr"), b_var("imm"))), op.size());
+        let addr = e_ptr(b_grp(e_add(e_rfield("ptr"), b_var("imm"))), op.size());
         match self {
             LdSt::Load => e_copy(reg.clone(), op.expr_addr(addr.clone())),
             LdSt::Store => e_copy(addr, op.expr_reg(reg)),

@@ -17,6 +17,8 @@ pub struct SLASpecBuilder {
 
 impl SLASpecBuilder {
     pub fn new() -> Self {
+        let mut instr_count = 0;
+        let mut instr_total = 0;
         let mut ifams_16: Vec<InstrFamilyBuilder> = vec![
             // MAIN_16A
             nop16::instr_fam(),
@@ -46,23 +48,54 @@ impl SLASpecBuilder {
             ldstiifp::instr_fam(),
         ];
 
+        println!("Init 16-bits instructions...");
         for ifam in ifams_16.iter_mut() {
             ifam.init_tokens_and_vars();
+            println!(
+                "\t{:16} -> {:6} intruction(s)",
+                ifam.name(),
+                ifam.instrs().len()
+            );
+            instr_count += ifam.instrs().len();
         }
+        println!("Count: {} 16-bits instructions\n", instr_count);
+        instr_total += instr_count;
+        instr_count = 0;
 
-        let mut ifams_32: Vec<InstrFamilyBuilder> = vec![nop32::instr_fam()];
+        let mut ifams_32: Vec<InstrFamilyBuilder> = vec![nop32::instr_fam(), dsp32mac::instr_fam()];
 
+        println!("Init 32-bits instructions...");
         for ifam in ifams_32.iter_mut() {
             ifam.init_tokens_and_vars();
+            println!(
+                "\t{:16} -> {:6} intruction(s)",
+                ifam.name(),
+                ifam.instrs().len()
+            );
+            instr_count += ifam.instrs().len();
         }
+        println!("Count: {} 32-bits instructions\n", instr_count);
+        instr_total += instr_count;
+        instr_count = 0;
 
-        let mut ifams_64: Vec<InstrFamilyBuilder> = vec![
-            // multi::instr_fam()
-        ];
+        let mut ifams_64: Vec<InstrFamilyBuilder> = vec![multi::instr_fam()];
 
+        println!("Init 64-bits instructions...");
         for ifam in ifams_64.iter_mut() {
             ifam.init_tokens_and_vars();
+            println!(
+                "\t{:16} -> {:6} intruction(s)",
+                ifam.name(),
+                ifam.instrs().len()
+            );
+            instr_count += ifam.instrs().len();
         }
+        println!("Count: {} 64-bits instructions\n", instr_count);
+        instr_total += instr_count;
+
+        println!("Intruction total: {}", instr_total);
+
+        println!("INIT DONE :)\n");
 
         SLASpecBuilder {
             ifams_16,
@@ -133,31 +166,39 @@ impl SLASpecBuilder {
             panic!("Output directory cannot be created")
         }
 
+        println!("Building blackfinplus.slaspec...");
         Self::build_main_file(&path.join("blackfinplus.slaspec"));
         let inc_dir = path.join("includes");
+        println!("DONE!\n");
 
         create_dir_all(&inc_dir).unwrap();
 
+        println!("Copying registers.sinc...");
         copy("data/registers.sinc", inc_dir.join("registers.sinc")).unwrap();
+        println!("DONE!\n");
 
         let mut instr_inc_file = File::create(inc_dir.join("instructions.sinc")).unwrap();
 
+        println!("Building 16-bits instructions...");
         instr_inc_file
             .write_all("## 16-bits instructions ##\n\n".as_bytes())
             .unwrap();
 
         Self::build_instrs(&self.ifams_16, &inc_dir, "instr16", &mut instr_inc_file);
 
+        println!("Building 32-bits instructions...");
         instr_inc_file
             .write_all("\n## 32-bits instructions ##\n\n".as_bytes())
             .unwrap();
 
         Self::build_instrs(&self.ifams_32, &inc_dir, "instr32", &mut instr_inc_file);
 
+        println!("Building 64-bits instructions...");
         instr_inc_file
             .write_all("\n## 64-bits instructions ##\n\n".as_bytes())
             .unwrap();
 
         Self::build_instrs(&self.ifams_64, &inc_dir, "instr64", &mut instr_inc_file);
+        println!("ALL DONE :3");
     }
 }

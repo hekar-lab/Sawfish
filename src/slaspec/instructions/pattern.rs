@@ -8,6 +8,7 @@ pub enum RegisterSet {
     DRegL,
     DRegH,
     DRegB,
+    DRegPair,
     PReg,
     IReg,
     MReg,
@@ -21,19 +22,21 @@ pub enum RegisterSet {
 impl RegisterSet {
     pub fn name(&self) -> String {
         match self {
-            Self::DReg => String::from("DReg"),
-            Self::DRegL => String::from("DRegL"),
-            Self::DRegH => String::from("DRegH"),
-            Self::DRegB => String::from("DRegB"),
-            Self::PReg => String::from("PReg"),
-            Self::IReg => String::from("IReg"),
-            Self::MReg => String::from("MReg"),
-            Self::BReg => String::from("BReg"),
-            Self::LReg => String::from("LReg"),
-            Self::SyRg2 => String::from("SyRg2"),
-            Self::SyRg3 => String::from("SyRg3"),
-            Self::CBit => String::from("CBIT"),
+            Self::DReg => "DReg",
+            Self::DRegL => "DRegL",
+            Self::DRegH => "DRegH",
+            Self::DRegB => "DRegB",
+            Self::DRegPair => "DRegPair",
+            Self::PReg => "PReg",
+            Self::IReg => "IReg",
+            Self::MReg => "MReg",
+            Self::BReg => "BReg",
+            Self::LReg => "LReg",
+            Self::SyRg2 => "SyRg2",
+            Self::SyRg3 => "SyRg3",
+            Self::CBit => "CBIT",
         }
+        .to_string()
     }
 
     fn build_regs(id: &str, len: usize, suffix: Option<&str>) -> Vec<String> {
@@ -77,6 +80,9 @@ impl RegisterSet {
             Self::DRegL => Self::build_regs("R", 8, Some("L")),
             Self::DRegH => Self::build_regs("R", 8, Some("H")),
             Self::DRegB => Self::build_regs("R", 8, Some("B")),
+            Self::DRegPair => {
+                Self::build_regs_from(vec!["_", "R10", "_", "R32", "_", "R54", "_", "R76"])
+            }
             Self::PReg => {
                 let mut regs = Self::build_regs("P", 6, None);
                 regs.append(&mut Self::build_regs_from(vec!["SP", "FP"]));

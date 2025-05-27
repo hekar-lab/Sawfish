@@ -1,7 +1,5 @@
 use std::collections::HashSet;
 
-use crate::slaspec::globals::DEFAULT_MEM;
-
 use super::{expr_util::*, pattern::Pattern, util::capitalize};
 
 #[derive(Debug, Clone)]
@@ -103,6 +101,10 @@ pub enum Expr {
         var: Box<Expr>,
         size: usize,
     },
+    Trunc {
+        var: Box<Expr>,
+        size: usize,
+    },
     Local {
         var: Box<Expr>,
         size: usize,
@@ -117,8 +119,12 @@ pub enum Expr {
         rhs: Box<Expr>,
     },
     Ptr {
+        space: String,
         addr: Box<Expr>,
         size: usize,
+    },
+    Ref {
+        var: Box<Expr>,
     },
     Return {
         addr: Box<Expr>,
@@ -196,8 +202,14 @@ impl Expr {
             Expr::Size { var, size } => {
                 return format!("{}:{size}", var.build(pattern, prefix));
             }
-            Expr::Ptr { addr, size } => {
-                return format!("*[{}]:{size} {}", DEFAULT_MEM, addr.build(pattern, prefix));
+            Expr::Trunc { var, size } => {
+                return format!("{}({size})", var.build(pattern, prefix));
+            }
+            Expr::Ptr { space, addr, size } => {
+                return format!("*[{space}]:{size} {}", addr.build(pattern, prefix));
+            }
+            Expr::Ref { var } => {
+                return format!("&{}", var.build(pattern, prefix));
             }
             Expr::Return { addr: expr } => {
                 return format!("return {}", expr.build(pattern, prefix));
@@ -223,18 +235,18 @@ impl Expr {
         String::new()
     }
 
-    pub fn multify(self, prefix: &str, rhs: bool, regs: &mut HashSet<(bool, String)>) -> Expr {
+    pub fn multify(self, prefix: &str, rhs_cpy: bool, regs: &mut HashSet<(bool, String)>) -> Expr {
         match self {
             Expr::Line { current, next } => b_line(
-                current.multify(prefix, rhs, regs),
+                current.multify(prefix, rhs_cpy, regs),
                 if let Some(val) = next {
-                    Some(val.multify(prefix, rhs, regs))
+                    Some(val.multify(prefix, rhs_cpy, regs))
                 } else {
                     None
                 },
             ),
             Expr::Field { id, is_reg } => {
-                if is_reg && rhs {
+                if is_reg && rhs_cpy {
                     regs.insert((true, format!("{}{}", prefix, &capitalize(&id))));
                     b_var(&format!("old_{}{}Reg", prefix, &capitalize(&id)))
                 } else {
@@ -243,7 +255,7 @@ impl Expr {
             }
             Expr::Var { id } => b_var(&format!("{}{}", prefix, &capitalize(&id))),
             Expr::Reg { id } => {
-                if rhs {
+                if rhs_cpy {
                     regs.insert((false, id.clone()));
                     b_var(&format!("old_{id}"))
                 } else {
@@ -255,27 +267,38 @@ impl Expr {
                 &id,
                 params
                     .into_iter()
-                    .map(|e| e.multify(prefix, rhs, regs))
+                    .map(|e| e.multify(prefix, rhs_cpy, regs))
                     .collect(),
             ),
             Expr::Label { id } => b_label(&capitalize(&id)),
-            Expr::Indirect { val } => b_indirect(val.multify(prefix, rhs, regs)),
-            Expr::Local { var, size } => b_local(var.multify(prefix, rhs, regs), size),
-            Expr::Unary { op, expr } => b_un(op, expr.multify(prefix, rhs, regs)),
-            Expr::Binary { lhs, op, rhs } => b_bin(
-                lhs.multify(prefix, false, regs),
-                op,
-                rhs.multify(prefix, true, regs),
-            ),
-            Expr::Size { var, size } => b_size(var.multify(prefix, rhs, regs), size),
-            Expr::Ptr { addr, size } => b_ptr(addr.multify(prefix, rhs, regs), size),
-            Expr::Return { addr } => b_ret(addr.multify(prefix, rhs, regs)),
-            Expr::Goto { dest } => b_goto(dest.multify(prefix, rhs, regs)),
-            Expr::Call { addr } => b_call(addr.multify(prefix, rhs, regs)),
-            Expr::Group { expr } => b_grp(expr.multify(prefix, rhs, regs)),
+            Expr::Indirect { val } => b_indirect(val.multify(prefix, rhs_cpy, regs)),
+            Expr::Local { var, size } => b_local(var.multify(prefix, rhs_cpy, regs), size),
+            Expr::Unary { op, expr } => b_un(op, expr.multify(prefix, rhs_cpy, regs)),
+            Expr::Binary { lhs, op, rhs } => match op {
+                Op::Copy => b_bin(
+                    lhs.multify(prefix, false, regs),
+                    op,
+                    rhs.multify(prefix, true, regs),
+                ),
+                _ => b_bin(
+                    lhs.multify(prefix, rhs_cpy, regs),
+                    op,
+                    rhs.multify(prefix, rhs_cpy, regs),
+                ),
+            },
+            Expr::Size { var, size } => b_size(var.multify(prefix, rhs_cpy, regs), size),
+            Expr::Trunc { var, size } => b_trunc(var.multify(prefix, rhs_cpy, regs), size),
+            Expr::Ptr { space, addr, size } => {
+                b_ptr(&space, addr.multify(prefix, rhs_cpy, regs), size)
+            }
+            Expr::Ref { var } => b_ref(var.multify(prefix, rhs_cpy, regs)),
+            Expr::Return { addr } => b_ret(addr.multify(prefix, rhs_cpy, regs)),
+            Expr::Goto { dest } => b_goto(dest.multify(prefix, rhs_cpy, regs)),
+            Expr::Call { addr } => b_call(addr.multify(prefix, rhs_cpy, regs)),
+            Expr::Group { expr } => b_grp(expr.multify(prefix, rhs_cpy, regs)),
             Expr::IfGoto { cond, goto } => b_ifgoto(
-                cond.multify(prefix, rhs, regs),
-                goto.multify(prefix, rhs, regs),
+                cond.multify(prefix, rhs_cpy, regs),
+                goto.multify(prefix, rhs_cpy, regs),
             ),
         }
     }

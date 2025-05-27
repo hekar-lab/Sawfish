@@ -41,7 +41,7 @@ impl LdStImmFPFactory {
             format!("{{reg}} = [FP - {{$imm}}]")
         };
 
-        let addr_expr = b_ptr(b_grp(e_sub(b_reg("FP"), b_var("imm"))), 4);
+        let addr_expr = e_ptr(b_grp(e_sub(b_reg("FP"), b_var("imm"))), 4);
         let reg_expr = e_rfield("reg");
 
         InstrBuilder::new(ifam)

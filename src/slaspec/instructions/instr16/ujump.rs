@@ -31,7 +31,7 @@ impl InstrFactory for JumpAbsFactory {
                     b_var(addr_var),
                     e_add(b_var("inst_start"), e_mult(e_field("off"), b_num(2))),
                 ))
-                .add_pcode(b_goto(b_indirect(b_ptr(b_size(b_var(addr_var), 4), 4)))),
+                .add_pcode(b_goto(b_indirect(e_ptr(b_size(b_var(addr_var), 4), 4)))),
         ]
     }
 }

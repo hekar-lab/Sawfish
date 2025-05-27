@@ -53,7 +53,7 @@ impl BinOpFactory {
                 if add {
                     e_add(e_rfield("dst"), e_field("src"))
                 } else {
-                    e_macp("sext", b_size(e_field("src"), 1))
+                    e_sext(b_size(e_field("src"), 1))
                 },
             ))
     }

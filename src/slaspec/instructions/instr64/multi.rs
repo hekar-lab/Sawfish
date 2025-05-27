@@ -205,7 +205,7 @@ impl MultiFactory {
 
 impl InstrFactory for MultiFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
-        let ifams32 = vec![nop32::instr_fam()];
+        let ifams32 = vec![nop32::instr_fam(), dsp32mac::instr_fam()];
 
         let ifams16 = vec![
             // MAIN_16A
@@ -224,6 +224,7 @@ impl InstrFactory for MultiFactory {
 
         for ifam32 in ifams32.iter() {
             for instr32 in ifam32.instrs() {
+                println!("Doing: {}", instr32.get_name());
                 for ifam16a in ifams16.iter() {
                     for instr16a in ifam16a.instrs() {
                         for ifam16b in ifams16.iter() {

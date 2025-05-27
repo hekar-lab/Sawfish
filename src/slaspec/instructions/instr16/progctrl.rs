@@ -131,14 +131,14 @@ impl InstrFactory for IMaskFactory {
                 .display("CLI {regL}".to_string())
                 .add_pcode(e_copy(
                     e_rfield("regL"),
-                    b_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
+                    e_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
                 ))
-                .add_pcode(e_copy(b_ptr(b_var(IMaskFactory::IMASK_VAR), 4), b_num(0))),
+                .add_pcode(e_copy(e_ptr(b_var(IMaskFactory::IMASK_VAR), 4), b_num(0))),
             IMaskFactory::base_instr(ifam)
                 .set_field_type("opc", FieldType::Mask(0x4))
                 .display("STI {regL}".to_string())
                 .add_pcode(e_copy(
-                    b_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
+                    e_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
                     e_rfield("regL"),
                 )),
         ]
@@ -231,7 +231,7 @@ impl InstrFactory for TestSetFactory {
                 .set_field_type("opc", FieldType::Mask(0xb))
                 .name("TestSet")
                 .display("TESTSET ({regL})".to_string())
-                .add_pcode(e_copy(e_local("testVal", 1), b_ptr(e_rfield("regL"), 1)))
+                .add_pcode(e_copy(e_local("testVal", 1), e_ptr(e_rfield("regL"), 1)))
                 .add_pcode(e_copy(b_reg("CC"), b_num(0x0)))
                 .add_pcode(b_ifgoto(
                     e_ne(b_var("testVal"), b_num(0x0)),
@@ -240,7 +240,7 @@ impl InstrFactory for TestSetFactory {
                 .add_pcode(e_copy(b_reg("CC"), b_num(0x1)))
                 .add_pcode(b_label("is_set"))
                 .add_pcode(e_copy(
-                    b_ptr(e_rfield("regL"), 1),
+                    e_ptr(e_rfield("regL"), 1),
                     e_bit_or(b_var("testVal"), b_num(0x80)),
                 )),
         ]
@@ -259,7 +259,7 @@ impl InstrFactory for SyncFactory {
                 .display("STI IDLE {regL}".to_string())
                 .add_pcode(e_copy(e_local(IMaskFactory::IMASK_VAR, 4), b_var(IMASK)))
                 .add_pcode(e_copy(
-                    b_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
+                    e_ptr(b_var(IMaskFactory::IMASK_VAR), 4),
                     e_rfield("regL"),
                 ))
                 .add_pcode(e_mac("idle")),

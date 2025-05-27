@@ -97,7 +97,7 @@ struct MvCCToStatFactory();
 
 impl MvCCToStatFactory {
     fn cc_flag() -> Expr {
-        b_grp(e_lshft(e_macp("zext", b_reg("CC")), e_rfield("cbit")))
+        b_grp(e_lshft(e_zext(b_reg("CC")), e_rfield("cbit")))
     }
 
     fn cc_mask() -> Expr {

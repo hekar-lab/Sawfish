@@ -29,7 +29,7 @@ impl InstrFactory for CCFactory {
                 .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
                 .name("CCToDreg")
                 .display("{reg} = CC".to_string())
-                .add_pcode(e_copy(e_rfield("reg"), e_macp("zext", b_reg("CC")))),
+                .add_pcode(e_copy(e_rfield("reg"), e_zext(b_reg("CC")))),
             InstrBuilder::new(ifam)
                 .set_field_type("opc", FieldType::Mask(0x1))
                 .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
@@ -41,7 +41,7 @@ impl InstrFactory for CCFactory {
                 .set_field_type("reg", FieldType::Variable(RegisterSet::DReg))
                 .name("CCToDreg")
                 .display("{reg} = !CC".to_string())
-                .add_pcode(e_copy(e_rfield("reg"), e_macp("zext", e_not(b_reg("CC"))))),
+                .add_pcode(e_copy(e_rfield("reg"), e_zext(e_not(b_reg("CC"))))),
             InstrBuilder::new(ifam)
                 .set_field_type("opc", FieldType::Mask(0x3))
                 .name("MvToCC")

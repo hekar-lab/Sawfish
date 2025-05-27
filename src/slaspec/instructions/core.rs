@@ -111,6 +111,9 @@ impl InstrBuilder {
 
         let words = self.pattern.fields();
         for word in words {
+            if word.is_empty() {
+                continue;
+            }
             for field in word {
                 if field.is_blank() {
                     continue;
@@ -124,9 +127,9 @@ impl InstrBuilder {
                 pattern_str += " & "
             }
             pattern_str.truncate(pattern_str.len() - 2);
-            pattern_str += "; ";
+            pattern_str += "\n\t ; ";
         }
-        pattern_str.truncate(pattern_str.len() - 2);
+        pattern_str.truncate(pattern_str.len() - 5);
 
         pattern_str
     }
