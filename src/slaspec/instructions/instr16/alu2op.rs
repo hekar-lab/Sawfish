@@ -15,7 +15,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
             ProtoField::new("sig", FieldType::Mask(0x10), 6),
             ProtoField::new("opc", FieldType::Blank, 4),
             ProtoField::new("src", FieldType::Blank, 3),
-            ProtoField::new("dst", FieldType::Variable(RegisterSet::DReg), 3),
+            ProtoField::new("dst", FieldType::Blank, 3),
         ]),
     );
 
@@ -35,15 +35,17 @@ struct OpAssignParam {
     name: String,
     op: BinOp,
     display: String,
+    div_field: bool,
 }
 
 impl OpAssignParam {
-    fn new(mask: u16, name: &str, op: BinOp, display: &str) -> OpAssignParam {
+    fn new(mask: u16, name: &str, op: BinOp, display: &str, div_field: bool) -> OpAssignParam {
         OpAssignParam {
             mask,
             name: name.to_string(),
             op,
             display: display.to_string(),
+            div_field,
         }
     }
 }
@@ -52,7 +54,7 @@ struct OpAssignFactory();
 
 impl OpAssignFactory {
     fn base_instr(ifam: &InstrFamilyBuilder, param: &OpAssignParam) -> InstrBuilder {
-        InstrBuilder::new(ifam)
+        let instr = InstrBuilder::new(ifam)
             .name(&param.name)
             .display(param.display.clone())
             .set_field_type("opc", FieldType::Mask(param.mask))
@@ -60,7 +62,19 @@ impl OpAssignFactory {
             .add_pcode(e_copy(
                 e_rfield("dst"),
                 (param.op)(e_rfield("dst"), e_rfield("src")),
-            ))
+            ));
+
+        if param.div_field {
+            instr.divide_field(
+                "dst",
+                ProtoPattern::new(vec![
+                    ProtoField::new("dst", FieldType::Variable(RegisterSet::DReg), 3),
+                    ProtoField::new("dstCpy", FieldType::Variable(RegisterSet::DReg), 3),
+                ]),
+            )
+        } else {
+            instr.set_field_type("dst", FieldType::Variable(RegisterSet::DReg))
+        }
     }
 }
 
@@ -75,12 +89,24 @@ impl InstrFactory for OpAssignFactory {
         }
 
         let params = vec![
-            OpAssignParam::new(0x0, "AShift32", e_arshft, "{dst} >>>= {src}"),
-            OpAssignParam::new(0x1, "LShift", e_rshft, "{dst} >>= {src}"),
-            OpAssignParam::new(0x2, "LShift", e_lshft, "{dst} <<= {src}"),
-            OpAssignParam::new(0x3, "MultInt", e_mult, "{dst} *= {src}"),
-            OpAssignParam::new(0x4, "AddSubShift", e_addshift1, "{dst} +<<1= {src}"),
-            OpAssignParam::new(0x5, "AddSubShift", e_addshift2, "{dst} +<<2= {src}"),
+            OpAssignParam::new(0x0, "AShift32", e_arshft, "{dst} >>>= {src}", false),
+            OpAssignParam::new(0x1, "LShift", e_rshft, "{dst} >>= {src}", false),
+            OpAssignParam::new(0x2, "LShift", e_lshft, "{dst} <<= {src}", false),
+            OpAssignParam::new(0x3, "MultInt", e_mult, "{dst} *= {src}", false),
+            OpAssignParam::new(
+                0x4,
+                "AddSubShift",
+                e_addshift1,
+                "{dst} += ({dstCpy} + {src}) << 1",
+                true,
+            ),
+            OpAssignParam::new(
+                0x5,
+                "AddSubShift",
+                e_addshift2,
+                "{dst} += ({dstCpy} + {src}) << 2",
+                true,
+            ),
         ];
 
         params

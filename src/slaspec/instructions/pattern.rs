@@ -8,6 +8,8 @@ pub enum RegisterSet {
     DRegL,
     DRegH,
     DRegB,
+    DRegE,
+    DRegO,
     DRegPair,
     PReg,
     IReg,
@@ -26,6 +28,8 @@ impl RegisterSet {
             Self::DRegL => "DRegL",
             Self::DRegH => "DRegH",
             Self::DRegB => "DRegB",
+            Self::DRegE => "DRegE",
+            Self::DRegO => "DRegO",
             Self::DRegPair => "DRegPair",
             Self::PReg => "PReg",
             Self::IReg => "IReg",
@@ -80,8 +84,10 @@ impl RegisterSet {
             Self::DRegL => Self::build_regs("R", 8, Some("L")),
             Self::DRegH => Self::build_regs("R", 8, Some("H")),
             Self::DRegB => Self::build_regs("R", 8, Some("B")),
+            Self::DRegE => Self::build_regs_from(vec!["R0", "_", "R2", "_", "R4", "_", "R6", "_"]),
+            Self::DRegO => Self::build_regs_from(vec!["R1", "_", "R3", "_", "R5", "_", "R7", "_"]),
             Self::DRegPair => {
-                Self::build_regs_from(vec!["_", "R10", "_", "R32", "_", "R54", "_", "R76"])
+                Self::build_regs_from(vec!["R10", "_", "R32", "_", "R54", "_", "R76", "_"])
             }
             Self::PReg => {
                 let mut regs = Self::build_regs("P", 6, None);
@@ -247,11 +253,10 @@ impl Field {
     }
 
     pub fn is_var(&self) -> bool {
-        if let FieldType::Variable(_) = self.ftype {
-            return true;
+        match self.ftype {
+            FieldType::Variable(_) => true,
+            _ => false,
         }
-
-        false
     }
 
     pub fn is_blank(&self) -> bool {
@@ -360,6 +365,30 @@ impl Pattern {
             for proto in split.fields.iter() {
                 let f = proto.to_field_end(end as usize);
                 end = f.bit_range.start as isize - 1;
+
+                self.fields[wi].insert(fi, f);
+                fi += 1;
+            }
+        }
+
+        self
+    }
+
+    pub fn divide_field(mut self, field_id: &str, div: ProtoPattern) -> Self {
+        if let Some((wi, mut fi)) = self.get_field_index(field_id) {
+            let field = &self.fields[wi][fi];
+
+            for dfield in div.fields.iter() {
+                if field.len() != dfield.size {
+                    println!("WARNING: Lengths are not matching for field division");
+                    return self;
+                }
+            }
+
+            let start = self.fields[wi].remove(fi).bit_range.start;
+
+            for proto in div.fields.iter() {
+                let f = proto.to_field(start);
 
                 self.fields[wi].insert(fi, f);
                 fi += 1;

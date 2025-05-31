@@ -95,6 +95,11 @@ impl InstrBuilder {
         self
     }
 
+    pub fn divide_field(mut self, field_id: &str, div: ProtoPattern) -> Self {
+        self.pattern = self.pattern.clone().divide_field(field_id, div);
+        self
+    }
+
     fn build_name(&self) -> String {
         format!(":^\"{}\"", self.name)
     }

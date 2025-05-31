@@ -4,41 +4,7 @@ use crate::slaspec::globals::REGISTER_SPACE;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
-use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
-
-pub fn instr_fam() -> InstrFamilyBuilder {
-    let mut ifam = InstrFamilyBuilder::new_32(
-        "Dsp32Mac",
-        "Multiply Accumulate",
-        "dmc",
-        [
-            ProtoPattern::new(vec![
-                ProtoField::new("sig", FieldType::Mask(0x18), 5),
-                ProtoField::new("x2", FieldType::Mask(0x0), 2),
-                ProtoField::new("mmod", FieldType::Blank, 4),
-                ProtoField::new("mm", FieldType::Blank, 1),
-                ProtoField::new("p", FieldType::Blank, 1),
-                ProtoField::new("w1", FieldType::Blank, 1),
-                ProtoField::new("op1", FieldType::Blank, 2),
-            ]),
-            ProtoPattern::new(vec![
-                ProtoField::new("h01", FieldType::Blank, 1),
-                ProtoField::new("h11", FieldType::Blank, 1),
-                ProtoField::new("w0", FieldType::Blank, 1),
-                ProtoField::new("op0", FieldType::Blank, 2),
-                ProtoField::new("h00", FieldType::Blank, 1),
-                ProtoField::new("h10", FieldType::Blank, 1),
-                ProtoField::new("dst", FieldType::Blank, 3),
-                ProtoField::new("src0", FieldType::Blank, 3),
-                ProtoField::new("src1", FieldType::Blank, 3),
-            ]),
-        ],
-    );
-
-    ifam.add_instrs(&CmplxMacFactory());
-
-    ifam
-}
+use crate::slaspec::instructions::pattern::{FieldType, RegisterSet};
 
 #[derive(Debug, Clone, Copy)]
 enum Dest {
@@ -198,26 +164,15 @@ impl CmplxMacParam {
         self.dst.set_fields(instr)
     }
 
-    fn mult_expr(&self, dst: Expr, src_a: Expr, src_b: Expr, id: &str) -> Expr {
-        let spe_case_label = b_label(&format!("spe_case_mult_{id}"));
-
+    fn mult_expr(&self, dst: Expr, src_a: Expr, src_b: Expr) -> Expr {
         let mut mult_exprs = vec![];
 
         if self.mode == Cmode::IS {
-            mult_exprs.push(e_copy(dst, e_mult(e_zext(src_a), e_zext(src_b))));
+            mult_exprs.push(e_copy(dst, e_mult(e_sext(src_a), e_sext(src_b))));
         } else {
             mult_exprs.append(&mut vec![
-                e_copy(dst.clone(), b_num(0x7fffffff)),
-                b_ifgoto(
-                    e_and(
-                        e_eq(src_a.clone(), b_num(0x8000)),
-                        e_eq(src_b.clone(), b_num(0x8000)),
-                    ),
-                    spe_case_label.clone(),
-                ),
-                e_copy(dst.clone(), e_mult(e_zext(src_a), e_zext(src_b))),
+                e_copy(dst.clone(), e_mult(e_sext(src_a), e_sext(src_b))),
                 cs_assign_by(e_lshft, dst, b_num(1)),
-                spe_case_label,
             ])
         }
 
@@ -241,68 +196,33 @@ impl CmplxMacParam {
             e_copy(b_local(a_re_var.clone(), 2), b_size(e_rfield("src0"), 2)),
             e_copy(b_local(b_im_var.clone(), 2), b_trunc(e_rfield("src1"), 2)),
             e_copy(b_local(b_re_var.clone(), 2), b_size(e_rfield("src1"), 2)),
-            b_local(tmp_arbi_var.clone(), 4),
-            b_local(tmp_aibr_var.clone(), 4),
-            b_local(tmp_arbr_var.clone(), 4),
-            b_local(tmp_aibi_var.clone(), 4),
+            b_local(tmp_aibi_var.clone(), 5),
+            b_local(tmp_arbi_var.clone(), 5),
+            b_local(tmp_aibr_var.clone(), 5),
+            b_local(tmp_arbr_var.clone(), 5),
             b_local(res_im_var.clone(), 5),
             b_local(res_re_var.clone(), 5),
-            self.mult_expr(
-                tmp_arbi_var.clone(),
-                a_re_var.clone(),
-                b_im_var.clone(),
-                "arbi",
-            ),
-            self.mult_expr(
-                tmp_aibr_var.clone(),
-                a_im_var.clone(),
-                b_re_var.clone(),
-                "aibr",
-            ),
-            self.mult_expr(
-                tmp_arbr_var.clone(),
-                a_re_var.clone(),
-                b_re_var.clone(),
-                "arbr",
-            ),
-            self.mult_expr(
-                tmp_aibi_var.clone(),
-                a_im_var.clone(),
-                b_im_var.clone(),
-                "aibi",
-            ),
+            self.mult_expr(tmp_arbi_var.clone(), a_re_var.clone(), b_im_var.clone()),
+            self.mult_expr(tmp_aibr_var.clone(), a_im_var.clone(), b_re_var.clone()),
+            self.mult_expr(tmp_arbr_var.clone(), a_re_var.clone(), b_re_var.clone()),
+            self.mult_expr(tmp_aibi_var.clone(), a_im_var.clone(), b_im_var.clone()),
         ];
 
         match self.opc {
             OpCmul::AxB => exprs.append(&mut vec![
-                e_copy(
-                    res_im_var.clone(),
-                    e_add(e_sext(tmp_arbi_var), e_sext(tmp_aibr_var)),
-                ),
-                e_copy(
-                    res_re_var.clone(),
-                    e_sub(e_sext(tmp_arbr_var), e_sext(tmp_aibi_var)),
-                ),
+                e_copy(res_im_var.clone(), e_add(tmp_arbi_var, tmp_aibr_var)),
+                e_copy(res_re_var.clone(), e_sub(tmp_arbr_var, tmp_aibi_var)),
             ]),
             OpCmul::AxBc => exprs.append(&mut vec![
-                e_copy(
-                    res_im_var.clone(),
-                    e_sub(e_sext(tmp_aibr_var), e_sext(tmp_arbi_var)),
-                ),
-                e_copy(
-                    res_re_var.clone(),
-                    e_add(e_sext(tmp_arbr_var), e_sext(tmp_aibi_var)),
-                ),
+                e_copy(res_im_var.clone(), e_sub(tmp_aibr_var, tmp_arbi_var)),
+                e_copy(res_re_var.clone(), e_add(tmp_arbr_var, tmp_aibi_var)),
             ]),
             OpCmul::AcxBc => exprs.append(&mut vec![
                 e_copy(
                     res_im_var.clone(),
-                    e_neg(b_grp(e_add(e_sext(tmp_arbi_var), e_sext(tmp_aibr_var)))),
+                    e_neg(b_grp(e_add(tmp_arbi_var, tmp_aibr_var))),
                 ),
-                e_copy(
-                    res_re_var.clone(),
-                    e_sub(e_sext(tmp_arbr_var), e_sext(tmp_aibi_var)),
-                ),
+                e_copy(res_re_var.clone(), e_sub(tmp_arbr_var, tmp_aibi_var)),
             ]),
         }
 
@@ -326,16 +246,8 @@ impl CmplxMacParam {
     }
 
     fn epxr(&self) -> Expr {
-        let im_var = if self.opa == OpAcc::None {
-            b_var(Self::RES_IM_ID)
-        } else {
-            b_reg("A1")
-        };
-        let re_var = if self.opa == OpAcc::None {
-            b_var(Self::RES_RE_ID)
-        } else {
-            b_reg("A0")
-        };
+        let im_var = b_var(Self::RES_IM_ID);
+        let re_var = b_var(Self::RES_RE_ID);
 
         let mut exprs = vec![self.op_expr()];
 
@@ -459,7 +371,7 @@ impl CmplxMacParam {
     }
 }
 
-struct CmplxMacFactory();
+pub struct CmplxMacFactory();
 
 impl CmplxMacFactory {
     fn base_instr(ifam: &InstrFamilyBuilder, param: &CmplxMacParam) -> InstrBuilder {

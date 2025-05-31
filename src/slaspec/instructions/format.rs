@@ -154,6 +154,7 @@ pub fn display_format(txt: &str, pattern: &Pattern, prefix: &str) -> (String, us
     (out, var_count)
 }
 
+#[allow(dead_code)]
 pub fn display_add_prefix(txt: &str, prefix: &str) -> String {
     let mut scanner = Scanner::new(txt);
     let tokens = scanner.scan();
