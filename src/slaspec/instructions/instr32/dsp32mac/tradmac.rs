@@ -3,147 +3,29 @@ use itertools::Itertools;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
+use crate::slaspec::instructions::instr32::common32::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Mmode {
-    Default = 0x0,
-    S2RND = 0x1,
-    T = 0x2,
-    W32 = 0x3,
-    FU = 0x4,
-    TFU = 0x6,
-    IS = 0x8,
-    ISS2 = 0x9,
-    IH = 0xb,
-    IU = 0xc,
-}
-
-impl Mmode {
-    fn display(&self) -> Option<String> {
-        match self {
-            Self::Default => None,
-            _ => Some(format!("{:?}", self)),
-        }
-    }
-
-    fn ext(&self) -> fn(Expr) -> Expr {
-        match self {
-            Self::Default
-            | Self::S2RND
-            | Self::T
-            | Self::W32
-            | Self::IS
-            | Self::ISS2
-            | Self::IH => e_sext,
-            Self::FU | Self::TFU | Self::IU => e_zext,
-        }
-    }
-
-    fn shft_correct(&self) -> bool {
-        match self {
-            Self::Default | Self::S2RND | Self::T | Self::W32 => true,
-            Self::FU | Self::TFU | Self::IS | Self::ISS2 | Self::IH | Self::IU => false,
-        }
-    }
-
-    fn sat32(&self) -> bool {
-        match self {
-            Self::W32 | Self::IH => true,
-            _ => false,
-        }
-    }
-
-    fn signed(&self) -> bool {
-        match self {
-            Self::FU | Self::TFU | Self::IU => false,
-            _ => true,
-        }
-    }
-
-    fn fraction(&self) -> bool {
-        match self {
-            Self::IS | Self::ISS2 | Self::IH | Self::IU => false,
-            _ => true,
-        }
-    }
-
-    fn extract_2x(&self) -> bool {
-        match self {
-            Self::S2RND | Self::ISS2 => true,
-            _ => false,
-        }
-    }
-
-    fn extract_trunc(&self) -> bool {
-        match self {
-            Self::T | Self::TFU => true,
-            _ => false,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum AccOp {
-    Copy = 0,
-    Add = 1,
-    Sub = 2,
-    None = 3,
-}
-
-impl AccOp {
-    fn display(&self) -> String {
-        match self {
-            Self::Copy => "=",
-            Self::Add => "+=",
-            Self::Sub => "-=",
-            _ => "",
-        }
-        .to_string()
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Half {
-    L = 0,
-    H = 1,
-}
-
-impl Half {
-    fn regset(&self) -> RegisterSet {
-        match self {
-            Self::L => RegisterSet::DRegL,
-            Self::H => RegisterSet::DRegH,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Acc {
-    A0 = 0,
-    A1 = 1,
-}
-
-impl Acc {
-    fn to_str(&self) -> String {
-        format!("{:?}", self)
-    }
-}
-
 #[derive(Debug, Clone, Copy)]
-struct Mac {
-    opa: AccOp,
+pub struct Mac {
+    accop: AccOp,
     acc: Acc,
+    operands: Oper,
     assign: bool,
 }
 
 impl Mac {
-    fn new(opa: AccOp, acc: Acc, assign: bool) -> Self {
-        Mac { opa, acc, assign }
+    pub fn new(accop: AccOp, acc: Acc, operands: Oper, assign: bool) -> Self {
+        Mac {
+            accop,
+            acc,
+            operands,
+            assign,
+        }
     }
 
-    fn id(&self) -> String {
-        self.acc.to_str()
+    pub fn no_accop(&self) -> bool {
+        self.accop == AccOp::None
     }
 
     fn reg_name(&self, full_reg: bool) -> String {
@@ -163,9 +45,9 @@ impl Mac {
         )
     }
 
-    fn name(&self, mv_para: bool, full_reg: bool) -> String {
+    pub fn name(&self, mv_para: bool, full_reg: bool) -> String {
         if self.assign {
-            if self.opa == AccOp::None {
+            if self.no_accop() {
                 if mv_para {
                     "Mv".to_string()
                 } else {
@@ -179,28 +61,28 @@ impl Mac {
         }
     }
 
-    fn mv_acc(&self) -> bool {
-        self.opa == AccOp::None && self.assign
+    pub fn mv_acc(&self) -> bool {
+        self.no_accop() && self.assign
     }
 
-    fn display(&self, mode: Mmode, mml: bool) -> String {
-        let op_str = if self.opa == AccOp::None {
+    pub fn display(&self, mode: Mmode, mml: bool) -> String {
+        let op_str = if self.no_accop() {
             self.acc.to_str()
         } else {
             format!(
-                "{} {} {{src0}} * {{src1}}",
-                self.acc.to_str(),
-                self.opa.display()
+                "{acc} {} {{src0{acc}}} * {{src1{acc}}}",
+                self.accop.op_str(),
+                acc = self.acc.to_str(),
             )
         };
         let mut opt_vec = vec![];
 
-        if let Some(mode) = mode.display() {
-            opt_vec.push(mode);
-        }
-
         if mml {
             opt_vec.push("M".to_string());
+        }
+
+        if let Some(mode) = mode.to_str() {
+            opt_vec.push(mode);
         }
 
         let opt_str = if opt_vec.is_empty() {
@@ -210,7 +92,7 @@ impl Mac {
         };
 
         if self.assign {
-            if self.opa == AccOp::None {
+            if self.no_accop() {
                 format!("{{dst{}}} = {op_str}{opt_str}", self.acc.to_str())
             } else {
                 format!("{{dst{}}} = ({op_str}){opt_str}", self.acc.to_str())
@@ -220,19 +102,31 @@ impl Mac {
         }
     }
 
-    fn set_fields(&self, instr: InstrBuilder, oper: Oper) -> InstrBuilder {
+    pub fn set_fields(&self, mut instr: InstrBuilder) -> InstrBuilder {
+        if !self.no_accop() {
+            instr = instr
+                .set_field_type(
+                    &format!("h0{}", self.acc as u32),
+                    FieldType::Mask(self.operands.lhs as u16),
+                )
+                .set_field_type(
+                    &format!("h1{}", self.acc as u32),
+                    FieldType::Mask(self.operands.rhs as u16),
+                )
+                .set_field_type(
+                    &format!("src0{}", self.acc.to_str()),
+                    FieldType::Variable(self.operands.lhs.regset()),
+                )
+                .set_field_type(
+                    &format!("src1{}", self.acc.to_str()),
+                    FieldType::Variable(self.operands.rhs.regset()),
+                );
+        }
+
         instr
             .set_field_type(
-                &format!("h0{}", self.acc as u32),
-                FieldType::Mask(oper.lhs as u16),
-            )
-            .set_field_type(
-                &format!("h1{}", self.acc as u32),
-                FieldType::Mask(oper.rhs as u16),
-            )
-            .set_field_type(
                 &format!("op{}", self.acc as u32),
-                FieldType::Mask(self.opa as u16),
+                FieldType::Mask(self.accop as u16),
             )
             .set_field_type(
                 &format!("w{}", self.acc as u32),
@@ -240,151 +134,43 @@ impl Mac {
             )
     }
 
-    fn mult_expr(
-        &self,
-        dst_id: &str,
-        src0_id: &str,
-        src1_id: &str,
-        mode: Mmode,
-        mml: bool,
-    ) -> Expr {
-        let dst = b_var(dst_id);
-        let src0 = e_rfield(src0_id);
-        let src1 = e_rfield(src1_id);
-        let mut code = vec![];
-
-        let src0ext = if mml { e_zext } else { mode.ext() };
-        let src1ext = if mml { e_sext } else { mode.ext() };
-
-        code.push(e_copy(
-            b_local(dst.clone(), 5),
-            e_mult(src0ext(src0), src1ext(src1)),
-        ));
-
-        if !mml && mode.shft_correct() {
-            code.push(cs_assign_by(e_lshft, dst, b_num(1)));
-        }
-
-        cs_mline(code.into())
-    }
-
-    fn acc_expr(&self, res_id: &str, mode: Mmode) -> Expr {
-        let acc = b_reg(&self.acc.to_str());
-        let res = b_var(res_id);
-        let mut code = vec![];
-
-        match self.opa {
-            AccOp::Copy => code.push(e_copy(acc.clone(), res.clone())),
-            AccOp::Add => code.push(if mode.signed() {
-                cs_sadd_sat(acc.clone(), acc.clone(), res.clone(), 5, &self.id())
-            } else {
-                cs_add_sat(acc.clone(), acc.clone(), res.clone(), 5, &self.id())
-            }),
-            AccOp::Sub => code.push(if mode.signed() {
-                cs_ssub_sat(acc.clone(), acc.clone(), res.clone(), 5, &self.id())
-            } else {
-                cs_sub_sat(acc.clone(), acc.clone(), res.clone(), &self.id())
-            }),
-            _ => {}
-        }
-
-        if mode.sat32() {
-            let tmp_var = b_var(&format!("sat32_tmp_{}", &self.id()));
-            code.push(b_local(tmp_var.clone(), 4));
-            code.push(cs_strunc_sat(tmp_var.clone(), acc.clone(), 4, &self.id()));
-            code.push(e_copy(acc, e_sext(tmp_var)));
-        }
-
-        cs_mline(code.into())
-    }
-
-    fn extract_expr(&self, dst_id: &str, mut src: Expr, full_reg: bool, mode: Mmode) -> Expr {
-        let dst = e_rfield(dst_id);
-        let src_2x = b_var(&format!("tmp_2x_src_{}", &self.id()));
-        let rnd_dst = b_var(&format!("tmp_rnd_{}", &self.id()));
-        let dst_size = if full_reg { 4 } else { 2 };
-        let mut code = vec![];
-
-        if mode.extract_2x() {
-            code.push(b_local(src_2x.clone(), 5));
-            code.push(e_copy(src_2x.clone(), e_mult(src.clone(), b_num(2))));
-        }
-
-        src = if mode.extract_2x() { src_2x } else { src };
-
-        if !full_reg {
-            if mode.fraction() {
-                code.push(b_local(rnd_dst.clone(), 3));
-                if mode.extract_trunc() {
-                    code.push(e_copy(rnd_dst.clone(), b_trunc(src.clone(), 2)));
-                } else {
-                    code.push(cs_round(rnd_dst.clone(), 3, src.clone(), 5, &self.id()));
-                }
-            }
-
-            src = if mode.fraction() { rnd_dst } else { src };
-        }
-
-        if mode.signed() {
-            code.push(cs_strunc_sat(dst, src, dst_size, &self.id()));
-        } else {
-            code.push(cs_trunc_sat(dst, src, dst_size, &self.id()));
-        }
-
-        cs_mline(code.into())
-    }
-
-    fn expr(&self, full_reg: bool, mode: Mmode, mml: bool) -> Expr {
+    pub fn expr(&self, full_reg: bool, mode: Mmode, mml: bool) -> Expr {
         let res_id = &format!("results_{}", self.acc.to_str());
-        let src0_id = "src0";
-        let src1_id = "src1";
+        let src0_id = &format!("src0{}", self.acc.to_str());
+        let src1_id = &format!("src1{}", self.acc.to_str());
         let dst_id = &format!("dst{}", self.acc.to_str());
         let mut code = vec![];
 
-        if self.opa != AccOp::None {
-            code.push(self.mult_expr(res_id, src0_id, src1_id, mode, mml));
-            code.push(self.acc_expr(res_id, mode));
+        if !self.no_accop() {
+            code.push(mult_expr(res_id, src0_id, src1_id, mode, mml, 5));
+            code.push(acc_expr(
+                b_reg(&self.acc.to_str()),
+                self.accop,
+                res_id,
+                mode,
+                false,
+                &format!("{}accOp", self.acc.to_str()),
+            ));
         }
 
         if self.assign {
-            let src = if self.opa != AccOp::None {
+            let src = if !self.no_accop() {
                 b_var(res_id)
             } else {
                 b_reg(&self.acc.to_str())
             };
-            code.push(self.extract_expr(dst_id, src, full_reg, mode));
+            code.push(extract_expr(
+                dst_id,
+                src,
+                full_reg,
+                mode,
+                false,
+                5,
+                &format!("{}extrOp", self.acc.to_str()),
+            ));
         }
 
         cs_mline(code.into())
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Oper {
-    lhs: Half,
-    rhs: Half,
-}
-
-impl Oper {
-    fn all() -> Vec<Self> {
-        vec![
-            Self {
-                lhs: Half::L,
-                rhs: Half::L,
-            },
-            Self {
-                lhs: Half::L,
-                rhs: Half::H,
-            },
-            Self {
-                lhs: Half::H,
-                rhs: Half::L,
-            },
-            Self {
-                lhs: Half::H,
-                rhs: Half::H,
-            },
-        ]
     }
 }
 
@@ -401,25 +187,16 @@ struct TradMacParam {
     mac1: Option<Mac>,
     mode: Mmode,
     mml: bool,
-    operands: Oper,
     full_reg: bool,
 }
 
 impl TradMacParam {
-    fn new(
-        mac0: Option<Mac>,
-        mac1: Option<Mac>,
-        mode: Mmode,
-        mml: bool,
-        operands: Oper,
-        full_reg: bool,
-    ) -> Self {
+    fn new(mac0: Option<Mac>, mac1: Option<Mac>, mode: Mmode, mml: bool, full_reg: bool) -> Self {
         Self {
             mac0,
             mac1,
             mode,
             mml,
-            operands,
             full_reg,
         }
     }
@@ -462,25 +239,38 @@ impl TradMacParam {
         }
     }
 
-    fn set_fields(&self, instr: InstrBuilder) -> InstrBuilder {
-        let instr = match self.mac_enum() {
+    fn set_fields(&self, mut instr: InstrBuilder) -> InstrBuilder {
+        instr = instr
+            .divide_field(
+                "src0",
+                ProtoPattern::new(vec![
+                    ProtoField::new("src0A0", FieldType::Blank, 3),
+                    ProtoField::new("src0A1", FieldType::Blank, 3),
+                ]),
+            )
+            .divide_field(
+                "src1",
+                ProtoPattern::new(vec![
+                    ProtoField::new("src1A0", FieldType::Blank, 3),
+                    ProtoField::new("src1A1", FieldType::Blank, 3),
+                ]),
+            );
+        instr = match self.mac_enum() {
             MacEnum::Mac0(mac) => mac
-                .set_fields(instr, self.operands)
+                .set_fields(instr)
                 .set_field_type("op1", FieldType::Mask(0x3))
                 .set_field_type("w1", FieldType::Mask(0x0)),
             MacEnum::Mac1(mac) => mac
-                .set_fields(instr, self.operands)
+                .set_fields(instr)
+                .set_field_type("mm", FieldType::Mask(self.mml as u16))
                 .set_field_type("op0", FieldType::Mask(0x3))
                 .set_field_type("w0", FieldType::Mask(0x0)),
-            MacEnum::Mac10(mac0, mac1) => {
-                mac1.set_fields(mac0.set_fields(instr, self.operands), self.operands)
-            }
+            MacEnum::Mac10(mac0, mac1) => mac1
+                .set_fields(mac0.set_fields(instr))
+                .set_field_type("mm", FieldType::Mask(self.mml as u16)),
         }
         .set_field_type("mmod", FieldType::Mask(self.mode as u16))
-        .set_field_type("mm", FieldType::Mask(self.mml as u16))
-        .set_field_type("p", FieldType::Mask(self.full_reg as u16))
-        .set_field_type("src0", FieldType::Variable(self.operands.lhs.regset()))
-        .set_field_type("src1", FieldType::Variable(self.operands.rhs.regset()));
+        .set_field_type("p", FieldType::Mask(self.full_reg as u16));
 
         if self.full_reg {
             instr.divide_field(
@@ -516,17 +306,32 @@ impl TradMacParam {
     }
 
     fn all_macs(assign: bool) -> Vec<(Option<Mac>, Option<Mac>)> {
-        let opacc = [AccOp::Copy, AccOp::Add, AccOp::Sub, AccOp::None];
+        let opacc = AccOp::all();
+        let oper = Oper::all();
 
         let mut mac0: Vec<Option<Mac>> = opacc
             .iter()
-            .map(|opa| Some(Mac::new(*opa, Acc::A0, assign)))
+            .cartesian_product(oper.iter())
+            .filter_map(|(accop, operands)| {
+                if *accop == AccOp::None && (operands.lhs != Half::L || operands.rhs != Half::L) {
+                    None
+                } else {
+                    Some(Some(Mac::new(*accop, Acc::A0, *operands, assign)))
+                }
+            })
             .collect();
         mac0.insert(0, None);
 
         let mut mac1: Vec<Option<Mac>> = opacc
             .iter()
-            .map(|opa| Some(Mac::new(*opa, Acc::A1, assign)))
+            .cartesian_product(oper.iter())
+            .filter_map(|(accop, operands)| {
+                if *accop == AccOp::None && (operands.lhs != Half::L || operands.rhs != Half::L) {
+                    None
+                } else {
+                    Some(Some(Mac::new(*accop, Acc::A1, *operands, assign)))
+                }
+            })
             .collect();
         mac1.insert(0, None);
 
@@ -546,63 +351,51 @@ impl TradMacParam {
     }
 
     fn all_params() -> Vec<Self> {
-        let mmod0 = vec![Mmode::Default, Mmode::W32, Mmode::FU, Mmode::IS];
-        let mmod1 = vec![
-            Mmode::Default,
-            Mmode::S2RND,
-            Mmode::T,
-            Mmode::FU,
-            Mmode::TFU,
-            Mmode::IS,
-            Mmode::ISS2,
-            Mmode::IH,
-            Mmode::IU,
-        ];
-        let mmode = vec![
-            Mmode::Default,
-            Mmode::S2RND,
-            Mmode::FU,
-            Mmode::IS,
-            Mmode::ISS2,
-            Mmode::IU,
-        ];
+        let mmod0 = Mmode::mmod0();
+        let mmod1 = Mmode::mmod1();
+        let mmode = Mmode::mmode();
 
         let mml = [false, true];
-        let oper = Oper::all();
 
         let mut mmod0_params: Vec<TradMacParam> = Self::all_macs(false)
             .into_iter()
-            .cartesian_product(oper.iter())
             .cartesian_product(mml.iter())
             .cartesian_product(mmod0)
-            .filter_map(|((((mac0, mac1), oper), mml), mode)| {
-                if (mac0.is_some() && mac0.unwrap().opa == AccOp::None)
-                    || (mac1.is_some() && mac1.unwrap().opa == AccOp::None)
+            .filter_map(|(((mac0, mac1), mml), mode)| {
+                if (mac0.is_some() && mac0.unwrap().no_accop())
+                    || (mac1.is_some() && mac1.unwrap().no_accop())
+                    || (mac1.is_none()) && *mml
                 {
                     None
                 } else {
-                    Some(Self::new(mac0, mac1, mode, *mml, *oper, false))
+                    Some(Self::new(mac0, mac1, mode, *mml, false))
                 }
             })
             .collect();
 
         let mut mmod1_params: Vec<TradMacParam> = Self::all_macs(true)
             .into_iter()
-            .cartesian_product(oper.iter())
             .cartesian_product(mml.iter())
             .cartesian_product(mmod1)
-            .map(|((((mac0, mac1), oper), mml), mode)| {
-                Self::new(mac0, mac1, mode, *mml, *oper, false)
+            .filter_map(|(((mac0, mac1), mml), mode)| {
+                if (mac1.is_none()) && *mml {
+                    None
+                } else {
+                    Some(Self::new(mac0, mac1, mode, *mml, false))
+                }
             })
             .collect();
 
         let mut mmode_params: Vec<TradMacParam> = Self::all_macs(true)
             .into_iter()
-            .cartesian_product(oper.iter())
             .cartesian_product(mml.iter())
             .cartesian_product(mmode)
-            .map(|((((mac0, mac1), oper), mml), mode)| {
-                Self::new(mac0, mac1, mode, *mml, *oper, true)
+            .filter_map(|(((mac0, mac1), mml), mode)| {
+                if (mac1.is_none()) && *mml {
+                    None
+                } else {
+                    Some(Self::new(mac0, mac1, mode, *mml, true))
+                }
             })
             .collect();
 

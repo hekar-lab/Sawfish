@@ -1,3 +1,5 @@
+mod common16;
+
 pub mod alu2op;
 pub mod brcc;
 pub mod cachectrl;

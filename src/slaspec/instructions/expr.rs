@@ -84,7 +84,7 @@ pub enum Expr {
         id: String,
     },
     Number {
-        val: isize,
+        val: i128,
     },
 
     Macro {

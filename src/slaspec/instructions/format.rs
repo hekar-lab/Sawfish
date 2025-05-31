@@ -29,7 +29,7 @@ impl Scanner {
     }
 
     fn at_end(&self) -> bool {
-        self.current >= self.text.len()
+        self.current >= self.text.len() as usize
     }
 
     fn peek(&self) -> char {
@@ -37,7 +37,7 @@ impl Scanner {
             return '\0';
         }
 
-        self.text.chars().nth(self.current).unwrap()
+        self.text.chars().nth(self.current as usize).unwrap()
     }
 
     fn advance(&mut self) -> char {
@@ -96,7 +96,7 @@ impl Scanner {
             self.advance();
         }
 
-        let value = String::from(&self.text[self.start..self.current]);
+        let value = String::from(&self.text[self.start as usize..self.current as usize]);
         self.add_token(Token::Literal(value));
     }
 
@@ -122,9 +122,9 @@ impl Scanner {
         self.advance();
 
         if is_var {
-            String::from(&self.text[self.start + 2..self.current - 1])
+            String::from(&self.text[self.start as usize + 2..self.current as usize - 1])
         } else {
-            String::from(&self.text[self.start + 1..self.current - 1])
+            String::from(&self.text[self.start as usize + 1..self.current as usize - 1])
         }
     }
 }

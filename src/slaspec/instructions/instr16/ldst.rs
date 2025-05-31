@@ -231,7 +231,7 @@ impl LdStFactory {
                 ),
             });
 
-        let incr_expr = b_num(params.size.bytes() as isize);
+        let incr_expr = b_num(params.size.bytes() as i128);
         match params.aop {
             AddrOp::Inc => instr = instr.add_pcode(cs_assign_by(e_add, e_rfield("ptr"), incr_expr)),
             AddrOp::Dec => instr = instr.add_pcode(cs_assign_by(e_sub, e_rfield("ptr"), incr_expr)),

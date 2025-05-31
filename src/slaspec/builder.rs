@@ -62,7 +62,11 @@ impl SLASpecBuilder {
         instr_total += instr_count;
         instr_count = 0;
 
-        let mut ifams_32: Vec<InstrFamilyBuilder> = vec![nop32::instr_fam(), dsp32mac::instr_fam()];
+        let mut ifams_32: Vec<InstrFamilyBuilder> = vec![
+            nop32::instr_fam(),
+            dsp32mac::instr_fam(),
+            dsp32mult::instr_fam(),
+        ];
 
         println!("Init 32-bits instructions...");
         for ifam in ifams_32.iter_mut() {

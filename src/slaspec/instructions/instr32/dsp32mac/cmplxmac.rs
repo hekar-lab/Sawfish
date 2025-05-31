@@ -273,7 +273,11 @@ impl CmplxMacParam {
                 if mode == &Cmode::IS {
                     src
                 } else {
-                    tmp_trunc_var
+                    if dst_info.size() == 2 {
+                        tmp_trunc_var
+                    } else {
+                        src
+                    }
                 },
                 dst_info.size(),
                 id,
@@ -294,7 +298,7 @@ impl CmplxMacParam {
             ));
             exprs.push(e_copy(
                 b_local(halfaddr_im_var.clone(), 2),
-                e_add(b_ref(e_rfield("dst")), b_num(self.dst.size() as isize)),
+                e_add(b_ref(e_rfield("dst")), b_num(self.dst.size() as i128)),
             ));
 
             exprs.push(cpy_to_var(

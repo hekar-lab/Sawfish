@@ -125,7 +125,7 @@ impl MOp {
         }
     }
 
-    fn size(&self) -> isize {
+    fn size(&self) -> i128 {
         match self {
             Self::Dreg | Self::Mreg => 4,
             Self::DregL | Self::DregH => 2,

@@ -124,6 +124,7 @@ impl DivideFactory {
             .name("Divide")
             .set_field_type("opc", FieldType::Mask(opc))
             .set_field_type("src", FieldType::Variable(RegisterSet::DReg))
+            .set_field_type("dst", FieldType::Variable(RegisterSet::DReg))
             .display(format!(
                 "DIV{} ({{dst}}, {{src}})",
                 div_type.to_ascii_uppercase()
@@ -162,6 +163,7 @@ impl MvDregToDregFactory {
                     RegisterSet::DRegL
                 }),
             )
+            .set_field_type("dst", FieldType::Variable(RegisterSet::DReg))
             .name(if byte_src {
                 "MvDregBToDreg"
             } else {
@@ -204,6 +206,7 @@ impl UnaryFactory {
             .display(format!("{{dst}} = {}{{src}}", op_chr))
             .set_field_type("opc", FieldType::Mask(opc))
             .set_field_type("src", FieldType::Variable(RegisterSet::DReg))
+            .set_field_type("dst", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(e_copy(e_rfield("dst"), op(e_rfield("src"))))
     }
 }

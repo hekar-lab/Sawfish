@@ -1,4 +1,4 @@
-use crate::slaspec::instructions::common::RegParam;
+use super::common16::RegParam;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr_util::*;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};

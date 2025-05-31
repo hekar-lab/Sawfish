@@ -141,7 +141,7 @@ impl LdStImmFactory {
             .set_field_type("reg", FieldType::Variable(op.regset()))
             .add_action(e_copy(
                 b_var("imm"),
-                e_mult(e_field("off"), b_num(op.size() as isize)),
+                e_mult(e_field("off"), b_num(op.size() as i128)),
             ))
             .add_pcode(w.expr(op))
     }

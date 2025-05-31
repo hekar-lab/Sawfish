@@ -24,7 +24,7 @@ struct DagAddImmFactory();
 impl DagAddImmFactory {
     fn base_instr(ifam: &InstrFamilyBuilder, op: u16) -> InstrBuilder {
         let inc = op % 2 == 0;
-        let val = 2 + 2 * ((op >= 2) as isize);
+        let val = 2 + 2 * ((op >= 2) as i128);
 
         InstrBuilder::new(ifam)
             .name("DagAddImm")

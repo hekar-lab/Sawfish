@@ -42,7 +42,7 @@ pub fn b_reg(id: &str) -> Expr {
     Expr::Reg { id: id.to_string() }
 }
 
-pub fn b_num(val: isize) -> Expr {
+pub fn b_num(val: i128) -> Expr {
     Expr::Number { val }
 }
 
@@ -405,12 +405,14 @@ pub fn cs_sub_sat(dst: Expr, src0: Expr, src1: Expr, id: &str) -> Expr {
 
 pub fn cs_sadd_sat(dst: Expr, src0: Expr, src1: Expr, size: usize, id: &str) -> Expr {
     let end_label = b_label(&format!("end_sadd_sat_{id}"));
+    let src0_cpy = b_var(&format!("sadd_src0_cpy_{id}"));
     cs_mline(
         vec![
+            e_copy(b_local(src0_cpy.clone(), size), src0.clone()),
             e_copy(dst.clone(), e_add(src0.clone(), src1.clone())),
-            b_ifgoto(e_not(e_scarry(src0.clone(), src1)), end_label.clone()),
+            b_ifgoto(e_not(e_scarry(src0_cpy, src1.clone())), end_label.clone()),
             e_copy(dst.clone(), b_num(1 << (size * 8 - 1))),
-            b_ifgoto(e_lts(src0, b_num(0)), end_label.clone()),
+            b_ifgoto(e_lts(src1, b_num(0)), end_label.clone()),
             e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)),
             end_label,
         ]
@@ -420,10 +422,12 @@ pub fn cs_sadd_sat(dst: Expr, src0: Expr, src1: Expr, size: usize, id: &str) -> 
 
 pub fn cs_ssub_sat(dst: Expr, src0: Expr, src1: Expr, size: usize, id: &str) -> Expr {
     let end_label = b_label(&format!("end_ssub_sat_{id}"));
+    let src0_cpy = b_var(&format!("sadd_src0_cpy_{id}"));
     cs_mline(
         vec![
+            e_copy(b_local(src0_cpy.clone(), size), src0.clone()),
             e_copy(dst.clone(), e_sub(src0.clone(), src1.clone())),
-            b_ifgoto(e_not(e_sborrow(src0, src1.clone())), end_label.clone()),
+            b_ifgoto(e_not(e_sborrow(src0_cpy, src1.clone())), end_label.clone()),
             e_copy(dst.clone(), b_num(1 << (size * 8 - 1))),
             b_ifgoto(e_gts(src1, b_num(0)), end_label.clone()),
             e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)),
@@ -454,7 +458,7 @@ pub fn cs_trunc_sat(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
         vec![
             e_copy(dst.clone(), b_size(src.clone(), size)),
             b_ifgoto(e_eq(e_zext(dst.clone()), src.clone()), end_label.clone()),
-            e_copy(dst.clone(), b_num(1 << (size * 8) - 1)),
+            e_copy(dst.clone(), b_num((1 << (size * 8)) - 1)),
             end_label,
         ]
         .into(),
