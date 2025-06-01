@@ -19,9 +19,6 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ]),
     );
 
-    ifam.add_pcodeop("divs");
-    ifam.add_pcodeop("divq");
-
     ifam.add_instrs(&OpAssignFactory());
     ifam.add_instrs(&DivideFactory());
     ifam.add_instrs(&MvDregToDregFactory());
@@ -119,7 +116,7 @@ impl InstrFactory for OpAssignFactory {
 struct DivideFactory();
 
 impl DivideFactory {
-    fn base_instr(ifam: &InstrFamilyBuilder, div_type: char, opc: u16) -> InstrBuilder {
+    fn base_instr(ifam: &InstrFamilyBuilder, div_type: char, opc: u16, op: Expr) -> InstrBuilder {
         InstrBuilder::new(ifam)
             .name("Divide")
             .set_field_type("opc", FieldType::Mask(opc))
@@ -129,19 +126,81 @@ impl DivideFactory {
                 "DIV{} ({{dst}}, {{src}})",
                 div_type.to_ascii_uppercase()
             ))
-            .add_pcode(e_mac2p(
-                &format!("div{}", div_type.to_ascii_lowercase()),
-                e_rfield("dst"),
-                e_rfield("src"),
-            ))
+            .add_pcode(op)
     }
 }
 
 impl InstrFactory for DivideFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
         vec![
-            Self::base_instr(ifam, 'q', 0x8),
-            Self::base_instr(ifam, 's', 0x9),
+            Self::base_instr(
+                ifam,
+                'q',
+                0x8,
+                cs_mline(
+                    vec![
+                        b_ifgoto(b_reg("AQ"), b_label("add_div")),
+                        cs_assign_by(
+                            e_sub,
+                            e_rfield("dst"),
+                            b_grp(e_lshft(e_rfield("src"), b_num(16))),
+                        ),
+                        b_goto(b_label("end_div")),
+                        b_label("add_div"),
+                        cs_assign_by(
+                            e_add,
+                            e_rfield("dst"),
+                            b_grp(e_lshft(e_rfield("src"), b_num(16))),
+                        ),
+                        b_label("end_div"),
+                        e_copy(
+                            b_reg("AQ"),
+                            e_xor(
+                                b_grp(e_ge(e_rfield("dst"), b_num(1 << 31))),
+                                b_grp(e_ge(
+                                    b_grp(e_bit_and(e_rfield("src"), b_num((1 << 16) - 1))),
+                                    b_num(1 << 15),
+                                )),
+                            ),
+                        ),
+                        e_copy(
+                            e_rfield("dst"),
+                            e_add(
+                                b_grp(e_lshft(e_rfield("dst"), b_num(1))),
+                                e_zext(e_not(b_reg("AQ"))),
+                            ),
+                        ),
+                    ]
+                    .into(),
+                ),
+            ),
+            Self::base_instr(
+                ifam,
+                's',
+                0x9,
+                cs_mline(
+                    vec![
+                        e_copy(
+                            b_reg("AQ"),
+                            e_xor(
+                                b_grp(e_ge(e_rfield("dst"), b_num(1 << 31))),
+                                b_grp(e_ge(
+                                    b_grp(e_bit_and(e_rfield("src"), b_num((1 << 16) - 1))),
+                                    b_num(1 << 15),
+                                )),
+                            ),
+                        ),
+                        e_copy(
+                            e_rfield("dst"),
+                            e_add(
+                                b_grp(e_lshft(e_rfield("dst"), b_num(1))),
+                                e_zext(b_reg("AQ")),
+                            ),
+                        ),
+                    ]
+                    .into(),
+                ),
+            ),
         ]
     }
 }
