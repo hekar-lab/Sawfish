@@ -242,10 +242,6 @@ pub fn e_bit_xor(lhs: Expr, rhs: Expr) -> Expr {
     b_bin(lhs, Op::BitXor, rhs)
 }
 
-pub fn e_alshft(lhs: Expr, rhs: Expr) -> Expr {
-    b_bin(lhs, Op::ALShft, rhs)
-}
-
 pub fn e_arshft(lhs: Expr, rhs: Expr) -> Expr {
     b_bin(lhs, Op::ARShft, rhs)
 }
@@ -471,7 +467,7 @@ pub fn cs_round(dst: Expr, dst_size: usize, src: Expr, src_size: usize, id: &str
     let end_label = b_label(&format!("end_rnd_{id}"));
     let rem_var = b_var(&format!("rem_var_{id}"));
     let rem_size = src_size - dst_size;
-    let mid = 1 << (rem_size * 8 - 1);
+    let threshold = 1 << (rem_size * 8 - 1);
     cs_mline(
         vec![
             e_copy(dst.clone(), b_trunc(src.clone(), rem_size)),
@@ -479,9 +475,9 @@ pub fn cs_round(dst: Expr, dst_size: usize, src: Expr, src_size: usize, id: &str
             b_ifgoto(b_reg("RND_MOD"), rnd_mod_label.clone()),
             b_ifgoto(
                 e_or(
-                    e_gt(rem_var.clone(), b_num(mid)),
+                    e_gt(rem_var.clone(), b_num(threshold)),
                     b_grp(e_and(
-                        e_eq(rem_var.clone(), b_num(mid)),
+                        e_eq(rem_var.clone(), b_num(threshold)),
                         e_eq(b_grp(e_bit_and(dst.clone(), b_num(1))), b_num(1)),
                     )),
                 ),
@@ -489,9 +485,26 @@ pub fn cs_round(dst: Expr, dst_size: usize, src: Expr, src_size: usize, id: &str
             ),
             b_goto(end_label.clone()),
             rnd_mod_label,
-            b_ifgoto(e_ge(rem_var, b_num(mid)), add_label.clone()),
+            b_ifgoto(e_ge(rem_var, b_num(threshold)), add_label.clone()),
             b_goto(end_label.clone()),
             add_label,
+            cs_assign_by(e_add, dst, b_num(1)),
+            end_label,
+        ]
+        .into(),
+    )
+}
+
+pub fn cs_round_biased(dst: Expr, dst_size: usize, src: Expr, src_size: usize, id: &str) -> Expr {
+    let end_label = b_label(&format!("end_rnd_{id}"));
+    let rem_var = b_var(&format!("rem_var_{id}"));
+    let rem_size = src_size - dst_size;
+    let threshold = 1 << (rem_size * 8 - 1);
+    cs_mline(
+        vec![
+            e_copy(dst.clone(), b_trunc(src.clone(), rem_size)),
+            e_copy(b_local(rem_var.clone(), rem_size), b_size(src, rem_size)),
+            b_ifgoto(e_lt(rem_var, b_num(threshold)), end_label.clone()),
             cs_assign_by(e_add, dst, b_num(1)),
             end_label,
         ]

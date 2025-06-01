@@ -18,7 +18,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
             ProtoPattern::new(vec![
                 ProtoField::new("sigDsp", FieldType::Mask(0xc), 4),
                 ProtoField::new("m", FieldType::Blank, 1),
-                ProtoField::new("sig", FieldType::Mask(0x0), 2),
+                ProtoField::new("sig", FieldType::Mask(0x1), 2),
                 ProtoField::new("mmod", FieldType::Blank, 4),
                 ProtoField::new("mm", FieldType::Blank, 1),
                 ProtoField::new("p", FieldType::Blank, 1),

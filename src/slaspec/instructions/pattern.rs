@@ -87,7 +87,7 @@ impl RegisterSet {
             Self::DRegE => Self::build_regs_from(vec!["R0", "_", "R2", "_", "R4", "_", "R6", "_"]),
             Self::DRegO => Self::build_regs_from(vec!["R1", "_", "R3", "_", "R5", "_", "R7", "_"]),
             Self::DRegPair => {
-                Self::build_regs_from(vec!["R10", "_", "R32", "_", "R54", "_", "R76", "_"])
+                Self::build_regs_from(vec!["R10", "R10", "R32", "R32", "R54", "R54", "R76", "R76"])
             }
             Self::PReg => {
                 let mut regs = Self::build_regs("P", 6, None);

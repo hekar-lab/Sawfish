@@ -76,6 +76,14 @@ impl InstrBuilder {
         self
     }
 
+    pub fn add_pcode_opt(mut self, pcode: Option<Expr>) -> Self {
+        if let Some(code) = pcode {
+            self.pcodes.add_expr(code);
+        }
+
+        self
+    }
+
     pub fn get_pcodes(&self) -> Code {
         self.pcodes.clone()
     }
@@ -87,6 +95,14 @@ impl InstrBuilder {
 
     pub fn set_field_type(mut self, field_id: &str, ftype: FieldType) -> Self {
         self.pattern = self.pattern.clone().set_field_type(field_id, ftype);
+        self
+    }
+
+    pub fn set_field_type_opt(mut self, cond: bool, field_id: &str, ftype: FieldType) -> Self {
+        if cond {
+            self.pattern = self.pattern.clone().set_field_type(field_id, ftype);
+        }
+
         self
     }
 
@@ -297,7 +313,7 @@ impl InstrFamilyBuilder {
             let mut word_str = "## ".to_string();
 
             for field in word {
-                if field.id().starts_with("sig") || field.id().starts_with("x") {
+                if field.id().starts_with("sig") || field.id().starts_with("fix") {
                     if let FieldType::Mask(mask) = field.ftype() {
                         let bin_str = format!("{mask:0len$b}", len = field.len());
                         for bit in bin_str.chars() {
