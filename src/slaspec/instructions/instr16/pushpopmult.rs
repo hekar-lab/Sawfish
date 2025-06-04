@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
@@ -74,7 +72,7 @@ impl PushPopFactory {
                 range
                     .iter()
                     .map(|i| op(b_reg(&format!("R{i}")), 4))
-                    .collect::<VecDeque<Expr>>(),
+                    .collect::<Vec<Expr>>(),
             ))
     }
 
@@ -97,7 +95,7 @@ impl PushPopFactory {
                 range
                     .iter()
                     .map(|i| op(b_reg(&format!("P{i}")), 4))
-                    .collect::<VecDeque<Expr>>(),
+                    .collect::<Vec<Expr>>(),
             ))
     }
 

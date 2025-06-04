@@ -1,8 +1,28 @@
+mod accop;
 mod addsub;
+mod addsubaccext;
 mod addsubvec;
+mod maxmin;
+mod misc;
+mod mvacc;
+mod mvaccreg;
+mod mvregacc;
+mod search;
+mod videoop;
+mod vidopmisc;
 
+use accop::AccOpFactory;
 use addsub::AddSubFactory;
+use addsubaccext::AddSubAccExtFactory;
 use addsubvec::AddSubVecFactory;
+use maxmin::MMANFactory;
+use misc::MiscFactory;
+use mvacc::MvAccFactory;
+use mvaccreg::MvAccRegFactory;
+use mvregacc::MvRegAccFactory;
+use search::SearchFactory;
+use videoop::VideoOpFactory;
+use vidopmisc::VidOpMiscFactory;
 
 use crate::slaspec::instructions::core::InstrFamilyBuilder;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
@@ -33,8 +53,20 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ],
     );
 
+    ifam.add_pcodeop("disalgnexcpt");
+
     ifam.add_instrs(&AddSubVecFactory());
     ifam.add_instrs(&AddSubFactory());
+    ifam.add_instrs(&MMANFactory());
+    ifam.add_instrs(&MvAccFactory());
+    ifam.add_instrs(&MvRegAccFactory());
+    ifam.add_instrs(&MvAccRegFactory());
+    ifam.add_instrs(&AddSubAccExtFactory());
+    ifam.add_instrs(&MiscFactory());
+    ifam.add_instrs(&SearchFactory());
+    ifam.add_instrs(&AccOpFactory());
+    ifam.add_instrs(&VidOpMiscFactory());
+    ifam.add_instrs(&VideoOpFactory());
 
     ifam
 }

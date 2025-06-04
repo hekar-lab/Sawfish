@@ -176,7 +176,7 @@ impl CmplxMacParam {
             ])
         }
 
-        cs_mline(mult_exprs.into())
+        cs_mline(mult_exprs)
     }
 
     fn op_expr(&self) -> Expr {
@@ -242,7 +242,7 @@ impl CmplxMacParam {
             _ => {}
         }
 
-        cs_mline(exprs.into())
+        cs_mline(exprs)
     }
 
     fn epxr(&self) -> Expr {
@@ -283,7 +283,7 @@ impl CmplxMacParam {
                 id,
             ));
 
-            cs_mline(exprs.into())
+            cs_mline(exprs)
         }
 
         if self.dst.is_move() {
@@ -326,7 +326,7 @@ impl CmplxMacParam {
             ));
         }
 
-        cs_mline(exprs.into())
+        cs_mline(exprs)
     }
 
     fn new(dst: &Dest, opa: &OpAcc, opc: &OpCmul, mode: &Cmode) -> Self {

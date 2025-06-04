@@ -163,13 +163,10 @@ impl Mac32Factory {
     }
 
     fn set_accs(var_id: &str) -> Expr {
-        cs_mline(
-            vec![
-                e_copy(b_reg("A1"), b_trunc(b_var(var_id), 4)),
-                e_copy(b_reg("A0.W"), b_size(b_var(var_id), 4)),
-            ]
-            .into(),
-        )
+        cs_mline(vec![
+            e_copy(b_reg("A1"), b_trunc(b_var(var_id), 4)),
+            e_copy(b_reg("A0.W"), b_size(b_var(var_id), 4)),
+        ])
     }
 
     fn expr(params: Mac32Params) -> Expr {
@@ -211,7 +208,7 @@ impl Mac32Factory {
             ));
         }
 
-        cs_mline(code.into())
+        cs_mline(code)
     }
 
     fn base_instr(ifam: &InstrFamilyBuilder, params: Mac32Params) -> InstrBuilder {

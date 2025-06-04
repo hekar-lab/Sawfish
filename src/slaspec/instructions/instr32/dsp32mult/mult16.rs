@@ -140,53 +140,47 @@ impl Mult16Factory {
     }
 
     fn expr(params: Mult16Params) -> Expr {
-        let expr_l = cs_mline(
-            vec![
-                mult_expr("resL", "src0L", "src1L", params.mode, false, 5),
-                extract_expr(
-                    "dstL",
-                    b_var("resL"),
-                    params.p,
-                    params.mode,
-                    false,
-                    5,
-                    "Low",
-                ),
-            ]
-            .into(),
-        );
+        let expr_l = cs_mline(vec![
+            mult_expr("resL", "src0L", "src1L", params.mode, false, 5),
+            extract_expr(
+                "dstL",
+                b_var("resL"),
+                params.p,
+                params.mode,
+                false,
+                5,
+                "Low",
+            ),
+        ]);
 
-        let expr_h = cs_mline(
-            vec![
-                mult_expr(
-                    "resH",
-                    "src0H",
-                    "src1H",
-                    if params.w0.is_some() {
-                        Mmode::Default
-                    } else {
-                        params.mode
-                    },
-                    params.mm,
-                    5,
-                ),
-                extract_expr(
-                    "dstH",
-                    b_var("resH"),
-                    params.p,
-                    params.mode,
-                    false,
-                    5,
-                    "High",
-                ),
-            ]
-            .into(),
-        );
+        let expr_h = cs_mline(vec![
+            mult_expr(
+                "resH",
+                "src0H",
+                "src1H",
+                if params.w0.is_some() {
+                    Mmode::Default
+                } else {
+                    params.mode
+                },
+                params.mm,
+                5,
+            ),
+            extract_expr(
+                "dstH",
+                b_var("resH"),
+                params.p,
+                params.mode,
+                false,
+                5,
+                "High",
+            ),
+        ]);
 
         match params.oper_enum() {
             OperEnum::L => expr_l,
             OperEnum::H => expr_h,
-            OperEnum::LH => cs_mline(vec![expr_l, expr_h].into()),
+            OperEnum::LH => cs_mline(vec![expr_l, expr_h]),
         }
     }
 

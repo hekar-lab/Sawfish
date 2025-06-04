@@ -137,69 +137,63 @@ impl InstrFactory for DivideFactory {
                 ifam,
                 'q',
                 0x8,
-                cs_mline(
-                    vec![
-                        b_ifgoto(b_reg("AQ"), b_label("add_div")),
-                        cs_assign_by(
-                            e_sub,
-                            e_rfield("dst"),
-                            b_grp(e_lshft(e_rfield("src"), b_num(16))),
+                cs_mline(vec![
+                    b_ifgoto(b_reg("AQ"), b_label("add_div")),
+                    cs_assign_by(
+                        e_sub,
+                        e_rfield("dst"),
+                        b_grp(e_lshft(e_rfield("src"), b_num(16))),
+                    ),
+                    b_goto(b_label("end_div")),
+                    b_label("add_div"),
+                    cs_assign_by(
+                        e_add,
+                        e_rfield("dst"),
+                        b_grp(e_lshft(e_rfield("src"), b_num(16))),
+                    ),
+                    b_label("end_div"),
+                    e_copy(
+                        b_reg("AQ"),
+                        e_xor(
+                            b_grp(e_ge(e_rfield("dst"), b_num(1 << 31))),
+                            b_grp(e_ge(
+                                b_grp(e_bit_and(e_rfield("src"), b_num((1 << 16) - 1))),
+                                b_num(1 << 15),
+                            )),
                         ),
-                        b_goto(b_label("end_div")),
-                        b_label("add_div"),
-                        cs_assign_by(
-                            e_add,
-                            e_rfield("dst"),
-                            b_grp(e_lshft(e_rfield("src"), b_num(16))),
+                    ),
+                    e_copy(
+                        e_rfield("dst"),
+                        e_add(
+                            b_grp(e_lshft(e_rfield("dst"), b_num(1))),
+                            e_zext(e_not(b_reg("AQ"))),
                         ),
-                        b_label("end_div"),
-                        e_copy(
-                            b_reg("AQ"),
-                            e_xor(
-                                b_grp(e_ge(e_rfield("dst"), b_num(1 << 31))),
-                                b_grp(e_ge(
-                                    b_grp(e_bit_and(e_rfield("src"), b_num((1 << 16) - 1))),
-                                    b_num(1 << 15),
-                                )),
-                            ),
-                        ),
-                        e_copy(
-                            e_rfield("dst"),
-                            e_add(
-                                b_grp(e_lshft(e_rfield("dst"), b_num(1))),
-                                e_zext(e_not(b_reg("AQ"))),
-                            ),
-                        ),
-                    ]
-                    .into(),
-                ),
+                    ),
+                ]),
             ),
             Self::base_instr(
                 ifam,
                 's',
                 0x9,
-                cs_mline(
-                    vec![
-                        e_copy(
-                            b_reg("AQ"),
-                            e_xor(
-                                b_grp(e_ge(e_rfield("dst"), b_num(1 << 31))),
-                                b_grp(e_ge(
-                                    b_grp(e_bit_and(e_rfield("src"), b_num((1 << 16) - 1))),
-                                    b_num(1 << 15),
-                                )),
-                            ),
+                cs_mline(vec![
+                    e_copy(
+                        b_reg("AQ"),
+                        e_xor(
+                            b_grp(e_ge(e_rfield("dst"), b_num(1 << 31))),
+                            b_grp(e_ge(
+                                b_grp(e_bit_and(e_rfield("src"), b_num((1 << 16) - 1))),
+                                b_num(1 << 15),
+                            )),
                         ),
-                        e_copy(
-                            e_rfield("dst"),
-                            e_add(
-                                b_grp(e_lshft(e_rfield("dst"), b_num(1))),
-                                e_zext(b_reg("AQ")),
-                            ),
+                    ),
+                    e_copy(
+                        e_rfield("dst"),
+                        e_add(
+                            b_grp(e_lshft(e_rfield("dst"), b_num(1))),
+                            e_zext(b_reg("AQ")),
                         ),
-                    ]
-                    .into(),
-                ),
+                    ),
+                ]),
             ),
         ]
     }

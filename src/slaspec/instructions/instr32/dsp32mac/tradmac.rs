@@ -170,7 +170,7 @@ impl Mac {
             ));
         }
 
-        cs_mline(code.into())
+        cs_mline(code)
     }
 }
 
@@ -295,13 +295,10 @@ impl TradMacParam {
         match self.mac_enum() {
             MacEnum::Mac0(mac) => mac.expr(self.full_reg, self.mode, false),
             MacEnum::Mac1(mac) => mac.expr(self.full_reg, self.mode, self.mml),
-            MacEnum::Mac10(mac0, mac1) => cs_mline(
-                vec![
-                    mac0.expr(self.full_reg, self.mode, false),
-                    mac1.expr(self.full_reg, Mmode::Default, self.mml),
-                ]
-                .into(),
-            ),
+            MacEnum::Mac10(mac0, mac1) => cs_mline(vec![
+                mac0.expr(self.full_reg, self.mode, false),
+                mac1.expr(self.full_reg, Mmode::Default, self.mml),
+            ]),
         }
     }
 

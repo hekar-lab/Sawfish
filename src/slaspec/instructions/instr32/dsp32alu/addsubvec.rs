@@ -64,10 +64,10 @@ impl Aop {
         };
 
         match self {
-            Aop::AA => cs_mline(vec![add_expr("L", id), add_expr("H", id)].into()),
-            Aop::AS => cs_mline(vec![add_expr("L", id), sub_expr("H", id)].into()),
-            Aop::SA => cs_mline(vec![sub_expr("L", id), add_expr("H", id)].into()),
-            Aop::SS => cs_mline(vec![sub_expr("L", id), sub_expr("H", id)].into()),
+            Aop::AA => cs_mline(vec![add_expr("L", id), add_expr("H", id)]),
+            Aop::AS => cs_mline(vec![add_expr("L", id), sub_expr("H", id)]),
+            Aop::SA => cs_mline(vec![sub_expr("L", id), add_expr("H", id)]),
+            Aop::SS => cs_mline(vec![sub_expr("L", id), sub_expr("H", id)]),
         }
     }
 }
@@ -80,33 +80,27 @@ impl AddSubVecFactory {
     }
 
     fn expr_init() -> Expr {
-        cs_mline(
-            vec![
-                e_copy(e_local("src0L", 2), b_size(e_rfield("src0"), 2)),
-                e_copy(e_local("src0H", 2), b_trunc(e_rfield("src0"), 2)),
-                e_copy(e_local("src1L", 2), b_size(e_rfield("src1"), 2)),
-                e_copy(e_local("src1H", 2), b_trunc(e_rfield("src1"), 2)),
-                e_local("resL", 2),
-                e_local("resH", 2),
-            ]
-            .into(),
-        )
+        cs_mline(vec![
+            e_copy(e_local("src0L", 2), b_size(e_rfield("src0"), 2)),
+            e_copy(e_local("src0H", 2), b_trunc(e_rfield("src0"), 2)),
+            e_copy(e_local("src1L", 2), b_size(e_rfield("src1"), 2)),
+            e_copy(e_local("src1H", 2), b_trunc(e_rfield("src1"), 2)),
+            e_local("resL", 2),
+            e_local("resH", 2),
+        ])
     }
 
     fn expr_cpy(dst_id: &str, cross: bool) -> Expr {
-        cs_mline(
-            vec![e_copy(
-                e_rfield(dst_id),
-                e_bit_or(
-                    e_zext(b_grp(e_lshft(
-                        b_var(if cross { "resL" } else { "resH" }),
-                        b_num(16),
-                    ))),
-                    e_zext(b_var(if cross { "resH" } else { "resL" })),
-                ),
-            )]
-            .into(),
-        )
+        cs_mline(vec![e_copy(
+            e_rfield(dst_id),
+            e_bit_or(
+                e_zext(b_grp(e_lshft(
+                    b_var(if cross { "resL" } else { "resH" }),
+                    b_num(16),
+                ))),
+                e_zext(b_var(if cross { "resH" } else { "resL" })),
+            ),
+        )])
     }
 
     fn base_instr(ifam: &InstrFamilyBuilder, sat: bool, cross: bool, aop: Aop) -> InstrBuilder {
@@ -169,20 +163,14 @@ impl AddSubVecFactory {
         };
 
         let shift_expr = match aop {
-            Aop::SA => Some(cs_mline(
-                vec![
-                    cs_assign_by(e_arshft, b_var("resL"), b_num(1)),
-                    cs_assign_by(e_arshft, b_var("resH"), b_num(1)),
-                ]
-                .into(),
-            )),
-            Aop::SS => Some(cs_mline(
-                vec![
-                    cs_assign_by(e_lshft, b_var("resL"), b_num(1)),
-                    cs_assign_by(e_lshft, b_var("resH"), b_num(1)),
-                ]
-                .into(),
-            )),
+            Aop::SA => Some(cs_mline(vec![
+                cs_assign_by(e_arshft, b_var("resL"), b_num(1)),
+                cs_assign_by(e_arshft, b_var("resH"), b_num(1)),
+            ])),
+            Aop::SS => Some(cs_mline(vec![
+                cs_assign_by(e_lshft, b_var("resL"), b_num(1)),
+                cs_assign_by(e_lshft, b_var("resH"), b_num(1)),
+            ])),
             _ => None,
         };
 

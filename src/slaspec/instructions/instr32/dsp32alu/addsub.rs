@@ -115,13 +115,10 @@ impl AddSubFactory {
             .set_field_type("src0", FieldType::Variable(RegisterSet::DReg))
             .set_field_type("src1", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(if dual {
-                cs_mline(
-                    vec![
-                        Self::expr("dst0", sat, false, true),
-                        Self::expr("dst1", sat, true, true),
-                    ]
-                    .into(),
-                )
+                cs_mline(vec![
+                    Self::expr("dst0", sat, false, true),
+                    Self::expr("dst1", sat, true, true),
+                ])
             } else {
                 Self::expr("dst0", sat, sub, true)
             })

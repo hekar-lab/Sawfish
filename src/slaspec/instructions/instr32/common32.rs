@@ -214,7 +214,7 @@ pub fn mult_expr(
         code.push(cs_assign_by(e_lshft, dst, b_num(1)));
     }
 
-    cs_mline(code.into())
+    cs_mline(code)
 }
 
 pub fn acc_expr(acc: Expr, accop: AccOp, res_id: &str, mode: Mmode, ns: bool, id: &str) -> Expr {
@@ -253,7 +253,7 @@ pub fn acc_expr(acc: Expr, accop: AccOp, res_id: &str, mode: Mmode, ns: bool, id
         code.push(e_copy(acc, e_sext(tmp_var)));
     }
 
-    cs_mline(code.into())
+    cs_mline(code)
 }
 
 pub fn extract_expr(
@@ -313,5 +313,5 @@ pub fn extract_expr(
         }
     }
 
-    cs_mline(code.into())
+    cs_mline(code)
 }
