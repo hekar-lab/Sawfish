@@ -275,7 +275,7 @@ impl VideoOpFactory {
                 "{{dst0}} = BYTEOP2P ({{src0}}, {{src1}}) ({opt_str})",
             ))
             .set_field_type("hl", FieldType::Mask(hl as u16))
-            .set_field_type("aopc", FieldType::Mask(0x16))
+            .set_field_type("aopc", FieldType::Mask(0x17))
             .set_field_type("aop", FieldType::Mask(0x0))
             .add_pcode(Self::init_vars())
             .add_pcode(if hl {

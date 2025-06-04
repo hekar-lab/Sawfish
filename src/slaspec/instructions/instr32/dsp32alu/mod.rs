@@ -1,5 +1,6 @@
 mod accop;
 mod addsub;
+mod addsubac0;
 mod addsubaccext;
 mod addsubvec;
 mod maxmin;
@@ -7,6 +8,7 @@ mod misc;
 mod mvacc;
 mod mvaccreg;
 mod mvregacc;
+mod packop;
 mod search;
 mod videoop;
 mod vidopmisc;
@@ -25,6 +27,8 @@ use videoop::VideoOpFactory;
 use vidopmisc::VidOpMiscFactory;
 
 use crate::slaspec::instructions::core::InstrFamilyBuilder;
+use crate::slaspec::instructions::instr32::dsp32alu::addsubac0::AddSubAc0Factory;
+use crate::slaspec::instructions::instr32::dsp32alu::packop::PackOpFactory;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -67,6 +71,8 @@ pub fn instr_fam() -> InstrFamilyBuilder {
     ifam.add_instrs(&AccOpFactory());
     ifam.add_instrs(&VidOpMiscFactory());
     ifam.add_instrs(&VideoOpFactory());
+    ifam.add_instrs(&PackOpFactory());
+    ifam.add_instrs(&AddSubAc0Factory());
 
     ifam
 }
