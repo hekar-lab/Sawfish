@@ -1,28 +1,24 @@
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
 
-fn get_shift(out_var: &str, nbits: usize) -> Expr {
-    cs_mline(vec![
-        e_copy(
-            e_local(out_var, 2),
-            e_bit_and(b_num((1 << nbits) - 1), e_rfield("src1")),
-        ),
-        cs_assign_by(e_lshft, b_var(out_var), b_num(16 - nbits as i128)),
-        cs_assign_by(e_arshft, b_var(out_var), b_num(16 - nbits as i128)),
-    ])
-}
-
-pub fn shift(dst: Expr, src: Expr, size: usize, arithm: bool, sat: bool, id: &str) -> Expr {
+pub fn shift(
+    dst: Expr,
+    src: Expr,
+    shft: Expr,
+    size: usize,
+    arithm: bool,
+    sat: bool,
+    id: &str,
+) -> Expr {
     let shift_var = &format!("shift_{}", id);
     let res_var = &format!("shft_res_{}", id);
     let lshft_lab = &format!("lshift_{}", id);
     let rshft_lab = &format!("rshift_{}", id);
     let end_lab = &format!("end_shift_{}", id);
-    let nbits = ((size * 8) as f64).log2().floor() as usize + 1;
 
     let mut code = vec![
         e_local(res_var, size),
-        get_shift(shift_var, nbits),
+        e_copy(e_local(shift_var, 1), shft),
         b_ifgoto(e_gts(b_var(shift_var), b_num(0)), b_label(rshft_lab)),
         b_ifgoto(e_lts(b_var(shift_var), b_num(0)), b_label(lshft_lab)),
         e_copy(dst.clone(), src.clone()),
@@ -74,7 +70,7 @@ pub fn shift(dst: Expr, src: Expr, size: usize, arithm: bool, sat: bool, id: &st
     cs_mline(code)
 }
 
-pub fn rot(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
+pub fn rot(dst: Expr, src: Expr, shft: Expr, size: usize, id: &str) -> Expr {
     let shftrot_var = &format!("rot_{}", id);
     let res_var = &format!("rot_res_{}", id);
     let bit_var = &format!("cc_bit_{}", id);
@@ -82,12 +78,11 @@ pub fn rot(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
     let rrot_lab = &format!("rrot_{}", id);
     let end_lab = &format!("end_rot_{}", id);
     let nbits = size * 8;
-    let nbits_shft = (nbits as f64).log2().floor() as usize + 1;
 
     let mut code = vec![
         e_local(res_var, size),
         e_local(bit_var, size),
-        get_shift(shftrot_var, nbits_shft),
+        e_copy(e_local(shftrot_var, 1), shft),
         b_ifgoto(e_gts(b_var(shftrot_var), b_num(0)), b_label(rrot_lab)),
         b_ifgoto(e_lts(b_var(shftrot_var), b_num(0)), b_label(lrot_lab)),
         e_copy(dst.clone(), src.clone()),

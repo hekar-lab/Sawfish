@@ -30,7 +30,7 @@ impl Sop {
         match self {
             Self::AShft | Self::AShftS => "AShift32",
             Self::LShft => "LShift32",
-            Self::RotShft => "ShiftRot32",
+            Self::RotShft => "Rot32",
         }
     }
 

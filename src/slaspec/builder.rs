@@ -68,6 +68,7 @@ impl SLASpecBuilder {
             dsp32mult::instr_fam(),
             dsp32alu::instr_fam(),
             dsp32shf::instr_fam(),
+            dsp32shfimm::instr_fam(),
         ];
 
         println!("Init 32-bits instructions...");

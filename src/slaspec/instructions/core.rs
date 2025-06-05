@@ -62,6 +62,14 @@ impl InstrBuilder {
         self
     }
 
+    pub fn add_action_opt(mut self, action: Option<Expr>) -> Self {
+        if let Some(act) = action {
+            self.actions.add_expr(act);
+        }
+
+        self
+    }
+
     pub fn get_actions(&self) -> Code {
         self.actions.clone()
     }
