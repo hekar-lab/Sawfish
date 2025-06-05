@@ -134,9 +134,7 @@ impl VideoOpFactory {
 
         Self::byteop_inst(ifam, sat)
             .name("Avg8Vec")
-            .display(format!(
-                "{{dst0}} = BYTEOP1P ({{src0}}, {{src1}}) ({opt_str})",
-            ))
+            .display(format!("{{dst0}} = BYTEOP1P ({{src0}}, {{src1}}){opt_str}",))
             .set_field_type("hl", FieldType::Mask(0x0))
             .set_field_type("aopc", FieldType::Mask(0x14))
             .set_field_type("aop", FieldType::Mask(aop as u16))

@@ -15,6 +15,7 @@ mod vidopmisc;
 
 use accop::AccOpFactory;
 use addsub::AddSubFactory;
+use addsubac0::AddSubAc0Factory;
 use addsubaccext::AddSubAccExtFactory;
 use addsubvec::AddSubVecFactory;
 use maxmin::MMANFactory;
@@ -22,13 +23,12 @@ use misc::MiscFactory;
 use mvacc::MvAccFactory;
 use mvaccreg::MvAccRegFactory;
 use mvregacc::MvRegAccFactory;
+use packop::PackOpFactory;
 use search::SearchFactory;
 use videoop::VideoOpFactory;
 use vidopmisc::VidOpMiscFactory;
 
 use crate::slaspec::instructions::core::InstrFamilyBuilder;
-use crate::slaspec::instructions::instr32::dsp32alu::addsubac0::AddSubAc0Factory;
-use crate::slaspec::instructions::instr32::dsp32alu::packop::PackOpFactory;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {

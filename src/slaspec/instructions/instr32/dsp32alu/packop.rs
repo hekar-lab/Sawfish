@@ -50,7 +50,7 @@ impl PackOpFactory {
         fn pack_bytes(b_idx: usize, srcid: usize) -> Expr {
             cs_mline(vec![
                 POF::get_byte(b_idx, POF::TMP4, srcid),
-                cs_assign_by(e_lshft, e_rfield("dst0"), b_num(1)),
+                cs_assign_by(e_lshft, e_rfield("dst0"), b_num(8)),
                 cs_assign_by(e_bit_or, e_rfield("dst0"), b_var(POF::TMP4)),
             ])
         }
@@ -78,7 +78,7 @@ impl PackOpFactory {
             let dst = &format!("dst{dst_id}");
             cs_mline(vec![
                 POF::get_byte_i0(b_idx + 4 * rev as usize, POF::TMP8),
-                cs_assign_by(e_lshft, e_rfield(dst), b_num(2)),
+                cs_assign_by(e_lshft, e_rfield(dst), b_num(16)),
                 cs_assign_by(e_bit_or, e_rfield(dst), b_var(POF::TMP8)),
             ])
         }

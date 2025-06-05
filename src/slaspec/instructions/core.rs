@@ -313,7 +313,7 @@ impl InstrFamilyBuilder {
             let mut word_str = "## ".to_string();
 
             for field in word {
-                if field.id().starts_with("sig") || field.id().starts_with("fix") {
+                if field.id().starts_with("sig") || field.id().starts_with("mask") {
                     if let FieldType::Mask(mask) = field.ftype() {
                         let bin_str = format!("{mask:0len$b}", len = field.len());
                         for bit in bin_str.chars() {

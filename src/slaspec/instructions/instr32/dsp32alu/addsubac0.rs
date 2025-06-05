@@ -10,7 +10,7 @@ impl AddSubAc0Factory {
         InstrBuilder::new(ifam)
             .name("AddSubAC0")
             .display(format!(
-                "{{dst0}} = {{src0}} {} {{src1}} + AC0{}{}",
+                "{{dst0}} = {{src0}} {} {{src1}} + AC0{} {}",
                 if sub { "-" } else { "+" },
                 if sub { " - 1" } else { "" },
                 if sat { "(S)" } else { "(NS)" }
@@ -30,9 +30,13 @@ impl AddSubAc0Factory {
             .add_pcode(if sub {
                 cs_assign_by(e_sub, b_var("result"), e_zext(e_not(b_reg("AC0"))))
             } else {
-                cs_assign_by(e_add, b_var("result"), b_reg("AC0"))
+                cs_assign_by(e_add, b_var("result"), e_zext(b_reg("AC0")))
             })
-            .add_pcode(cs_strunc_sat(e_rfield("dst0"), b_var("result"), 4, "asac0"))
+            .add_pcode(if sat {
+                cs_strunc_sat(e_rfield("dst0"), b_var("result"), 4, "asac0")
+            } else {
+                e_copy(e_rfield("dst0"), b_size(b_var("result"), 4))
+            })
     }
 }
 
