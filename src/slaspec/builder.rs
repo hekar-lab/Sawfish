@@ -75,6 +75,7 @@ impl SLASpecBuilder {
             loopsetup::instr_fam(),
             ldimmhalf::instr_fam(),
             calla::instr_fam(),
+            ldstidxi::instr_fam(),
         ];
 
         println!("Init 32-bits instructions...");
