@@ -77,6 +77,7 @@ impl SLASpecBuilder {
             calla::instr_fam(),
             ldstidxi::instr_fam(),
             linkage::instr_fam(),
+            ldstexcl::instr_fam(),
         ];
 
         println!("Init 32-bits instructions...");

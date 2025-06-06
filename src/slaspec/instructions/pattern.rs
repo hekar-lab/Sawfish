@@ -136,6 +136,7 @@ pub enum FieldType {
     Mask(u16),
     UImmVal,
     SImmVal,
+    Any,
     Variable(RegisterSet),
 }
 

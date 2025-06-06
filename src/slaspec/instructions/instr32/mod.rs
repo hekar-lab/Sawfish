@@ -7,6 +7,7 @@ pub mod dsp32mult;
 pub mod dsp32shf;
 pub mod dsp32shfimm;
 pub mod ldimmhalf;
+pub mod ldstexcl;
 pub mod ldstidxi;
 pub mod linkage;
 pub mod loopsetup;
