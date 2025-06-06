@@ -1,5 +1,6 @@
 mod common32;
 
+pub mod calla;
 pub mod dsp32alu;
 pub mod dsp32mac;
 pub mod dsp32mult;
