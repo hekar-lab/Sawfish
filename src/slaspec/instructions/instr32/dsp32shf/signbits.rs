@@ -41,6 +41,10 @@ pub struct SignBitsFactory();
 
 impl SignBitsFactory {
     fn sign_instr(ifam: &InstrFamilyBuilder, sop: u16, src_reg: Src) -> InstrBuilder {
+        let counted = match &src_reg {
+            Src::Reg(_) => e_rfield("src0"),
+            Src::Acc(id) => b_reg(&id),
+        };
         let mut instr = InstrBuilder::new(ifam)
             .name("SignBits")
             .display(format!("{{dst}} = SIGNBITS {}", src_reg.display()))
@@ -49,17 +53,17 @@ impl SignBitsFactory {
             .set_field_type("hls", FieldType::Mask(0x0))
             .set_field_type("dst", FieldType::Variable(RegisterSet::DRegL))
             .add_pcode(cs_mline(vec![
-                b_ifgoto(e_lt(e_rfield("src0"), b_num(0)), b_label("sign_neg")),
+                b_ifgoto(e_lts(counted.clone(), b_num(0)), b_label("sign_neg")),
                 e_copy(
                     e_rfield("dst"),
-                    e_sub(e_macp("lzcount", e_rfield("src0")), b_num(src_reg.offset())),
+                    e_sub(e_macp("lzcount", counted.clone()), b_num(src_reg.offset())),
                 ),
                 b_goto(b_label("sign_end")),
                 b_label("sign_neg"),
                 e_copy(
                     e_rfield("dst"),
                     e_sub(
-                        e_macp("lzcount", e_bit_not(e_rfield("src0"))),
+                        e_macp("lzcount", e_bit_not(counted)),
                         b_num(src_reg.offset()),
                     ),
                 ),

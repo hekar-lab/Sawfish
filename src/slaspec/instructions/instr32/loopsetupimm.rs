@@ -59,7 +59,7 @@ impl LoopSetupImmFactory {
             ))
             .add_action(e_copy(b_var(loop_act), b_num(1)))
             .add_action(e_mac2p("globalset", b_var("endImm"), b_var(loop_act)))
-            .add_pcode(e_copy(b_reg(lt), b_var("startImm")))
+            .add_pcode(e_copy(b_reg(lt), b_var("inst_next")))
             .add_pcode(e_copy(b_reg(lb), b_var("endImm")))
             .add_pcode(e_copy(b_reg(lc), b_var("lcImm")))
     }

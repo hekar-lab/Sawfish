@@ -138,7 +138,7 @@ impl SLASpecBuilder {
             "define space {} type=register_space size=2;\n",
             REGISTER_SPACE
         );
-        header += "\n\n";
+        header += "\n";
 
         header
     }
@@ -156,10 +156,10 @@ impl SLASpecBuilder {
         file.write_all(Self::build_main_header().as_bytes())
             .unwrap();
 
-        file.write_all(&Self::hwloop_sinc()).unwrap();
-
         file.write_all("@include \"includes/registers.sinc\"\n\n".as_bytes())
             .unwrap();
+
+        file.write_all(&Self::hwloop_sinc()).unwrap();
 
         file.write_all("with: phase=1 {\n@include \"includes/instructions.sinc\"\n}\n".as_bytes())
             .unwrap();

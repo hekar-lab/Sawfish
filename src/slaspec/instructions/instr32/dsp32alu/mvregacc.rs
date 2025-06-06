@@ -80,7 +80,7 @@ impl Aop {
                 }
             }
             Aop::RegLA0X | Aop::RegLA1X => {
-                e_copy(b_reg(&format!("{acc_str}.X")), b_size(e_rfield("src0"), 2))
+                e_copy(b_reg(&format!("{acc_str}.X")), b_size(e_rfield("src0"), 1))
             }
         }
     }

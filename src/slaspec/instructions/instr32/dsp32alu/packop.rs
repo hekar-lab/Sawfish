@@ -29,7 +29,7 @@ impl PackOpFactory {
             b_var(dstid),
             e_bit_and(
                 b_num(0xff),
-                e_rshft(
+                b_grp(e_rshft(
                     e_rfield(&format!("src0")),
                     b_grp(e_mult(
                         b_num(8),
@@ -41,7 +41,7 @@ impl PackOpFactory {
                             b_num(8),
                         )),
                     )),
-                ),
+                )),
             ),
         )
     }
@@ -79,7 +79,7 @@ impl PackOpFactory {
             cs_mline(vec![
                 POF::get_byte_i0(b_idx + 4 * rev as usize, POF::TMP8),
                 cs_assign_by(e_lshft, e_rfield(dst), b_num(16)),
-                cs_assign_by(e_bit_or, e_rfield(dst), b_var(POF::TMP8)),
+                cs_assign_by(e_bit_or, e_rfield(dst), b_size(b_var(POF::TMP8), 4)),
             ])
         }
 

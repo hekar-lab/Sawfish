@@ -4,7 +4,7 @@ use crate::slaspec::instructions::expr_util::*;
 fn get_shift(out_var: &str, nbits: usize) -> Expr {
     cs_mline(vec![
         e_copy(
-            e_local(out_var, 2),
+            b_var(out_var),
             e_bit_and(b_num((1 << nbits) - 1), e_rfield("src1")),
         ),
         cs_assign_by(e_lshft, b_var(out_var), b_num(16 - nbits as i128)),
@@ -22,6 +22,7 @@ pub fn shift(dst: Expr, src: Expr, size: usize, arithm: bool, sat: bool, id: &st
 
     let mut code = vec![
         e_local(res_var, size),
+        e_local(shift_var, 2),
         get_shift(shift_var, nbits),
         b_ifgoto(e_gts(b_var(shift_var), b_num(0)), b_label(rshft_lab)),
         b_ifgoto(e_lts(b_var(shift_var), b_num(0)), b_label(lshft_lab)),

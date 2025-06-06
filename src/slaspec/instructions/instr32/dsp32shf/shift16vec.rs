@@ -39,7 +39,7 @@ impl Sop {
         } else {
             "ASHIFT"
         };
-        format!("{{dst}} = {shft_str} {{src0}} BY {{src1}}{sat_str}")
+        format!("{{dst}} = {shft_str} {{src0}} BY {{src1}} ({sat_str})")
     }
 }
 
@@ -61,24 +61,27 @@ impl Shift16VecFactory {
             .add_pcode(e_local("res_vecL", 2))
             .add_pcode(e_local("res_vecH", 2))
             .add_pcode(shift(
-                e_rfield("res_vecL"),
-                e_rfield("src_vecL"),
+                b_var("res_vecL"),
+                b_var("src_vecL"),
                 2,
                 sop.arithm(),
                 sop.sat(),
-                &sop.name(),
+                &format!("{}L", sop.name()),
             ))
             .add_pcode(shift(
-                e_rfield("res_vecH"),
-                e_rfield("src_vecH"),
+                b_var("res_vecH"),
+                b_var("src_vecH"),
                 2,
                 sop.arithm(),
                 sop.sat(),
-                &sop.name(),
+                &format!("{}H", sop.name()),
             ))
             .add_pcode(e_copy(
                 e_rfield("dst"),
-                e_bit_or(e_lshft(b_var("res_vecH"), b_num(16)), b_var("res_vecL")),
+                e_bit_or(
+                    e_lshft(e_zext(b_var("res_vecH")), b_num(16)),
+                    e_zext(b_var("res_vecL")),
+                ),
             ))
     }
 }

@@ -367,10 +367,25 @@ pub fn cs_ifgoto(cond: Expr, goto: Expr) -> Expr {
     cs_ifgoto_lab(cond, goto, "ignore_jump")
 }
 
+pub fn cs_max_num(size: usize) -> Expr {
+    b_grp(e_sub(
+        b_grp(e_lshft(b_num(1), b_num((size * 8) as i128))),
+        b_num(1),
+    ))
+}
+
+pub fn cs_smin_num(size: usize) -> Expr {
+    b_grp(e_lshft(b_num(1), b_num((size * 8 - 1) as i128)))
+}
+
+pub fn cs_smax_num(size: usize) -> Expr {
+    b_grp(e_sub(cs_smin_num(size), b_num(1)))
+}
+
 pub fn cs_add_sat(dst: Expr, src0: Expr, src1: Expr, size: usize, id: &str) -> Expr {
     let sat_label = b_label(&format!("end_add_sat_{id}"));
     cs_mline(vec![
-        e_copy(dst.clone(), b_num((1 << (8 * size)) - 1)),
+        e_copy(dst.clone(), cs_max_num(size)),
         b_ifgoto(e_carry(src0.clone(), src1.clone()), sat_label.clone()),
         e_copy(dst, e_add(src0, src1)),
         sat_label,
@@ -394,9 +409,9 @@ pub fn cs_sadd_sat(dst: Expr, src0: Expr, src1: Expr, size: usize, id: &str) -> 
         e_copy(b_local(src0_cpy.clone(), size), src0.clone()),
         e_copy(dst.clone(), e_add(src0.clone(), src1.clone())),
         b_ifgoto(e_not(e_scarry(src0_cpy, src1.clone())), end_label.clone()),
-        e_copy(dst.clone(), b_num(1 << (size * 8 - 1))),
+        e_copy(dst.clone(), cs_smin_num(size)),
         b_ifgoto(e_lts(src1, b_num(0)), end_label.clone()),
-        e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)),
+        e_copy(dst.clone(), cs_smax_num(size)),
         end_label,
     ])
 }
@@ -408,9 +423,9 @@ pub fn cs_ssub_sat(dst: Expr, src0: Expr, src1: Expr, size: usize, id: &str) -> 
         e_copy(b_local(src0_cpy.clone(), size), src0.clone()),
         e_copy(dst.clone(), e_sub(src0.clone(), src1.clone())),
         b_ifgoto(e_not(e_sborrow(src0_cpy, src1.clone())), end_label.clone()),
-        e_copy(dst.clone(), b_num(1 << (size * 8 - 1))),
+        e_copy(dst.clone(), cs_smin_num(size)),
         b_ifgoto(e_gts(src1, b_num(0)), end_label.clone()),
-        e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)),
+        e_copy(dst.clone(), cs_smax_num(size)),
         end_label,
     ])
 }
@@ -420,9 +435,9 @@ pub fn cs_strunc_sat(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
     cs_mline(vec![
         e_copy(dst.clone(), b_size(src.clone(), size)),
         b_ifgoto(e_eq(e_sext(dst.clone()), src.clone()), end_label.clone()),
-        e_copy(dst.clone(), b_num(1 << (size * 8 - 1))),
+        e_copy(dst.clone(), cs_smin_num(size)),
         b_ifgoto(e_lts(src, b_num(0)), end_label.clone()),
-        e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)),
+        e_copy(dst.clone(), cs_smax_num(size)),
         end_label,
     ])
 }
@@ -432,7 +447,7 @@ pub fn cs_trunc_sat(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
     cs_mline(vec![
         e_copy(dst.clone(), b_size(src.clone(), size)),
         b_ifgoto(e_eq(e_zext(dst.clone()), src.clone()), end_label.clone()),
-        e_copy(dst.clone(), b_num((1 << (size * 8)) - 1)),
+        e_copy(dst.clone(), cs_max_num(size)),
         end_label,
     ])
 }
@@ -450,10 +465,7 @@ pub fn cs_round(dst: Expr, dst_size: usize, src: Expr, src_size: usize, id: &str
             b_size(src.clone(), rem_size),
         ),
         e_copy(dst.clone(), b_trunc(src, rem_size)),
-        b_ifgoto(
-            e_eq(dst.clone(), b_num((1 << (8 * dst_size - 1)) - 1)),
-            end_label.clone(),
-        ),
+        b_ifgoto(e_eq(dst.clone(), cs_smax_num(dst_size)), end_label.clone()),
         b_ifgoto(b_reg("RND_MOD"), rnd_mod_label.clone()),
         b_ifgoto(
             e_or(
@@ -486,10 +498,7 @@ pub fn cs_round_biased(dst: Expr, dst_size: usize, src: Expr, src_size: usize, i
             b_size(src.clone(), rem_size),
         ),
         e_copy(dst.clone(), b_trunc(src, rem_size)),
-        b_ifgoto(
-            e_eq(dst.clone(), b_num((1 << (8 * dst_size - 1)) - 1)),
-            end_label.clone(),
-        ),
+        b_ifgoto(e_eq(dst.clone(), cs_smax_num(dst_size)), end_label.clone()),
         b_ifgoto(e_lt(rem_var, b_num(threshold)), end_label.clone()),
         cs_assign_by(e_add, dst, b_num(1)),
         end_label,
@@ -529,10 +538,10 @@ pub fn cs_abs_sat(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
         ),
         e_copy(dst.clone(), e_neg(src.clone())),
         b_ifgoto(
-            e_ne(src, b_num(1 << (size * 8 - 1))),
+            e_ne(src, cs_smin_num(size)),
             b_label(&format!("abs_end_{}", id)),
         ),
-        e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)),
+        e_copy(dst.clone(), cs_smax_num(size)),
         b_label(&format!("abs_end_{}", id)),
     ])
 }
@@ -541,10 +550,10 @@ pub fn cs_neg_sat(dst: Expr, src: Expr, sat: bool, size: usize, id: &str) -> Exp
     let mut code = vec![e_copy(dst.clone(), e_neg(src.clone()))];
     if sat {
         code.push(b_ifgoto(
-            e_ne(src, b_num(1 << (size * 8 - 1))),
+            e_ne(src, cs_smin_num(size)),
             b_label(&format!("neg_end_{}", id)),
         ));
-        code.push(e_copy(dst.clone(), b_num((1 << (size * 8 - 1)) - 1)));
+        code.push(e_copy(dst.clone(), cs_smax_num(size)));
         code.push(b_label(&format!("neg_end_{}", id)))
     }
     cs_mline(code)

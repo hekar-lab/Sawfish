@@ -49,7 +49,7 @@ impl AddSubAccExtFactory {
             ))
             .set_field_type("hl", FieldType::Mask(0x0))
             .set_field_type("aopc", FieldType::Mask(0xb))
-            .set_field_type("aop", FieldType::Mask(0x2))
+            .set_field_type("aop", FieldType::Mask(0x2 + sub as u16))
             .set_field_type("s", FieldType::Mask(sat as u16))
             .set_field_type("x", FieldType::Mask(0x0))
             .add_pcode(if sat {

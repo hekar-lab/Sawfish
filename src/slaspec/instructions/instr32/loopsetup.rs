@@ -143,7 +143,7 @@ impl LoopSetupFactory {
 
         instr = match lop {
             Lop::LSETUPZ => instr
-                .add_pcode(b_ifgoto(e_gt(b_reg(lc), b_num(0)), b_label("end_setup")))
+                .add_pcode(b_ifgoto(e_ne(b_reg(lc), b_num(0)), b_label("end_setup")))
                 .add_pcode(b_goto(b_indirect(b_size(b_var("endImm"), 4))))
                 .add_pcode(b_label("end_setup")),
             Lop::LSETUPLEZ => instr

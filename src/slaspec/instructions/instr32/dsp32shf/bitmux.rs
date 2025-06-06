@@ -15,7 +15,7 @@ impl BitMuxFactory {
         };
 
         fn get_bit(src: &str, sop: bool) -> Expr {
-            b_grp(if sop {
+            e_zext(if sop {
                 e_rshft(e_rfield(src), b_num(31))
             } else {
                 e_bit_and(e_rfield(src), b_num(1))

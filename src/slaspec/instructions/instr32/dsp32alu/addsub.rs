@@ -3,7 +3,7 @@ use itertools::Itertools;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
-use crate::slaspec::instructions::pattern::{FieldType, RegisterSet};
+use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Aop {
@@ -95,11 +95,11 @@ impl AddSubFactory {
     fn as32_instr(ifam: &InstrFamilyBuilder, sat: bool, aop: Aop) -> InstrBuilder {
         let sub = aop as u16 == 0x1;
         let dual = aop as u16 == 0x2;
-        InstrBuilder::new(ifam)
+        let mut instr = InstrBuilder::new(ifam)
             .name(if dual { "AddSub32Dual" } else { "AddSub32" })
             .display(if dual {
                 format!(
-                    "{{dst0}} = {{src0}} + {{src1}}, {{dst1}} = {{src0}} - {{src1}} ({})",
+                    "{{dst0}} = {{src0}} + {{src1}}, {{dst1}} = {{src0Cpy}} - {{src1Cpy}} ({})",
                     Self::disp_sat(sat)
                 )
             } else {
@@ -116,12 +116,32 @@ impl AddSubFactory {
             .set_field_type("src1", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(if dual {
                 cs_mline(vec![
-                    Self::expr("dst0", sat, false, true),
-                    Self::expr("dst1", sat, true, true),
+                    Self::expr("dst0", sat, false, false),
+                    Self::expr("dst1", sat, true, false),
                 ])
             } else {
-                Self::expr("dst0", sat, sub, true)
-            })
+                Self::expr("dst0", sat, sub, false)
+            });
+
+        if dual {
+            instr = instr
+                .divide_field(
+                    "src0",
+                    ProtoPattern::new(vec![
+                        ProtoField::new("src0", FieldType::Variable(RegisterSet::DReg), 3),
+                        ProtoField::new("src0Cpy", FieldType::Variable(RegisterSet::DReg), 3),
+                    ]),
+                )
+                .divide_field(
+                    "src1",
+                    ProtoPattern::new(vec![
+                        ProtoField::new("src1", FieldType::Variable(RegisterSet::DReg), 3),
+                        ProtoField::new("src1Cpy", FieldType::Variable(RegisterSet::DReg), 3),
+                    ]),
+                );
+        }
+
+        instr
     }
 
     fn asrnd_instr(ifam: &InstrFamilyBuilder, hl: bool, aop: Aop, down: bool) -> InstrBuilder {

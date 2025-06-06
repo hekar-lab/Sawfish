@@ -146,6 +146,7 @@ impl Mac {
             code.push(acc_expr(
                 b_reg(&self.acc.to_str()),
                 self.accop,
+                5,
                 res_id,
                 mode,
                 false,

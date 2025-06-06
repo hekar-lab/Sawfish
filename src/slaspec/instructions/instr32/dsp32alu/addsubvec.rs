@@ -3,7 +3,7 @@ use itertools::Itertools;
 use crate::slaspec::instructions::core::{InstrBuilder, InstrFactory, InstrFamilyBuilder};
 use crate::slaspec::instructions::expr::Expr;
 use crate::slaspec::instructions::expr_util::*;
-use crate::slaspec::instructions::pattern::{FieldType, RegisterSet};
+use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern, RegisterSet};
 
 #[derive(Debug, Clone, Copy)]
 enum Aop {
@@ -31,8 +31,8 @@ impl Aop {
                     b_var(&format!("res{hl}")),
                     b_var(&format!("src0{hl}")),
                     b_var(&format!("src1{hl}")),
-                    4,
-                    &format!("asv{hl}_{id}"),
+                    2,
+                    &format!("asv{hl}{id}"),
                 )
             }
         } else {
@@ -50,8 +50,8 @@ impl Aop {
                     b_var(&format!("res{hl}")),
                     b_var(&format!("src0{hl}")),
                     b_var(&format!("src1{hl}")),
-                    4,
-                    &format!("asv{hl}_{id}"),
+                    2,
+                    &format!("asv{hl}{id}"),
                 )
             }
         } else {
@@ -75,8 +75,11 @@ impl Aop {
 pub struct AddSubVecFactory();
 
 impl AddSubVecFactory {
-    fn display(dst_id: &str, aop: Aop) -> String {
-        format!("{{{dst_id}}} = {{src0}} {} {{src1}}", aop.op_str())
+    fn display(dst_id: &str, aop: Aop, suffix: &str) -> String {
+        format!(
+            "{{{dst_id}}} = {{src0{suffix}}} {} {{src1{suffix}}}",
+            aop.op_str()
+        )
     }
 
     fn expr_init() -> Expr {
@@ -109,9 +112,9 @@ impl AddSubVecFactory {
             .set_field_type("aop", FieldType::Mask(aop as u16))
             .set_field_type("s", FieldType::Mask(sat as u16))
             .set_field_type("x", FieldType::Mask(cross as u16))
-            .set_field_type("dst0", FieldType::Variable(RegisterSet::DReg))
             .set_field_type("src0", FieldType::Variable(RegisterSet::DReg))
             .set_field_type("src1", FieldType::Variable(RegisterSet::DReg))
+            .set_field_type("dst0", FieldType::Variable(RegisterSet::DReg))
             .add_pcode(Self::expr_init())
     }
 
@@ -119,7 +122,7 @@ impl AddSubVecFactory {
         Self::base_instr(ifam, sat, cross, aop)
             .display(format!(
                 "{}{}",
-                Self::display("dst0", aop),
+                Self::display("dst0", aop, ""),
                 match (sat, cross) {
                     (false, false) => "",
                     (false, true) => " (CO)",
@@ -177,13 +180,27 @@ impl AddSubVecFactory {
         Self::base_instr(ifam, sat, cross, aop)
             .display(format!(
                 "{}, {}{}",
-                Self::display("dst0", dst0_aop),
-                Self::display("dst1", dst1_aop),
+                Self::display("dst0", dst0_aop, ""),
+                Self::display("dst1", dst1_aop, "Cpy"),
                 opt_str
             ))
             .set_field_type("aopc", FieldType::Mask(0x1))
             .set_field_type("hl", FieldType::Mask(hl as u16))
             .set_field_type("dst1", FieldType::Variable(RegisterSet::DReg))
+            .divide_field(
+                "src0",
+                ProtoPattern::new(vec![
+                    ProtoField::new("src0", FieldType::Variable(RegisterSet::DReg), 3),
+                    ProtoField::new("src0Cpy", FieldType::Variable(RegisterSet::DReg), 3),
+                ]),
+            )
+            .divide_field(
+                "src1",
+                ProtoPattern::new(vec![
+                    ProtoField::new("src1", FieldType::Variable(RegisterSet::DReg), 3),
+                    ProtoField::new("src1Cpy", FieldType::Variable(RegisterSet::DReg), 3),
+                ]),
+            )
             .add_pcode(dst0_aop.expr(sat, "dst0"))
             .add_pcode_opt(shift_expr.clone())
             .add_pcode(Self::expr_cpy("dst0", cross))
@@ -195,7 +212,7 @@ impl AddSubVecFactory {
 
 impl InstrFactory for AddSubVecFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
-        let mut simple_instrs: Vec<InstrBuilder> = [Aop::AA, Aop::AS, Aop::SA, Aop::AS]
+        let mut simple_instrs: Vec<InstrBuilder> = [Aop::AA, Aop::AS, Aop::SA, Aop::SS]
             .into_iter()
             .cartesian_product([false, true])
             .cartesian_product([false, true])
@@ -204,7 +221,7 @@ impl InstrFactory for AddSubVecFactory {
 
         let mut dual_instrs: Vec<InstrBuilder> = [false, true]
             .into_iter()
-            .cartesian_product([Aop::AA, Aop::SA, Aop::AS])
+            .cartesian_product([Aop::AA, Aop::SA, Aop::SS])
             .cartesian_product([false, true])
             .cartesian_product([false, true])
             .map(|(((hl, aop), sat), cross)| Self::dual_instr(ifam, sat, cross, aop, hl))

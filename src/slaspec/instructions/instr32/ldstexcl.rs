@@ -10,7 +10,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         "lse",
         [
             ProtoPattern::new(vec![
-                ProtoField::new("sig", FieldType::Mask(0x39), 6),
+                ProtoField::new("sig", FieldType::Mask(0x3b), 6),
                 ProtoField::new("w", FieldType::Blank, 1),
                 ProtoField::new("z", FieldType::Blank, 1),
                 ProtoField::new("sz", FieldType::Blank, 2),

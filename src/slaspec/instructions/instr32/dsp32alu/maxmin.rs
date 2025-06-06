@@ -18,10 +18,10 @@ impl Aop {
         format!(
             "{}{}{}",
             match self {
-                Aop::Max => "{src0} = MAX({dst0}, {dst1})",
-                Aop::Min => "{src0} = MIN({dst0}, {dst1})",
-                Aop::Abs => "{src0} = ABS {dst0}",
-                Aop::Neg => "{src0} = -{dst0}",
+                Aop::Max => "{dst0} = MAX({src0}, {src1})",
+                Aop::Min => "{dst0} = MIN({src0}, {src1})",
+                Aop::Abs => "{dst0} = ABS {src0}",
+                Aop::Neg => "{dst0} = -{src0}",
             },
             if *self == Aop::Neg {
                 if sat { " (S)" } else { " (NS)" }
@@ -127,7 +127,10 @@ impl MMANFactory {
             .add_pcode_opt(if !op32 {
                 Some(e_copy(
                     e_rfield("dst0"),
-                    e_bit_or(b_grp(e_lshft(b_var("resH"), b_num(16))), b_var("resL")),
+                    e_bit_or(
+                        b_grp(e_lshft(e_zext(b_var("resH")), b_num(16))),
+                        e_zext(b_var("resL")),
+                    ),
                 ))
             } else {
                 None

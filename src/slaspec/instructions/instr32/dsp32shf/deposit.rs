@@ -19,8 +19,8 @@ impl DepositFactory {
                 "{{dst}} = DEPOSIT ({{src0}}, {{src1}}){}",
                 if sext { " (X)" } else { "" }
             ))
-            .set_field_type("sopc", FieldType::Mask(0xb))
-            .set_field_type("sop", FieldType::Mask(sext as u16))
+            .set_field_type("sopc", FieldType::Mask(0xa))
+            .set_field_type("sop", FieldType::Mask(0x2 + sext as u16))
             .set_field_type("hls", FieldType::Mask(0x0))
             .set_field_type("dst", FieldType::Variable(RegisterSet::DReg))
             .set_field_type("src0", FieldType::Variable(RegisterSet::DReg))
@@ -43,7 +43,7 @@ impl DepositFactory {
                     e_local(sgn_shft, 4),
                     e_sub(b_num(32), b_grp(e_add(b_var(ext_len), b_var(ext_off)))),
                 ),
-                b_ifgoto(e_ge(b_var(sgn_shft), b_num(0)), b_label("pos_sgnshft")),
+                b_ifgoto(e_ges(b_var(sgn_shft), b_num(0)), b_label("pos_sgnshft")),
                 e_copy(b_var(sgn_shft), b_num(0)),
                 b_label("pos_sgnshft"),
                 e_copy(

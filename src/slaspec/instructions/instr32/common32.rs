@@ -217,7 +217,15 @@ pub fn mult_expr(
     cs_mline(code)
 }
 
-pub fn acc_expr(acc: Expr, accop: AccOp, res_id: &str, mode: Mmode, ns: bool, id: &str) -> Expr {
+pub fn acc_expr(
+    acc: Expr,
+    accop: AccOp,
+    acc_size: usize,
+    res_id: &str,
+    mode: Mmode,
+    ns: bool,
+    id: &str,
+) -> Expr {
     let res = b_var(res_id);
     let mut code = vec![];
 
@@ -227,16 +235,16 @@ pub fn acc_expr(acc: Expr, accop: AccOp, res_id: &str, mode: Mmode, ns: bool, id
             cs_assign_by(e_add, acc.clone(), res.clone())
         } else {
             if mode.signed() {
-                cs_sadd_sat(acc.clone(), acc.clone(), res.clone(), 5, id)
+                cs_sadd_sat(acc.clone(), acc.clone(), res.clone(), acc_size, id)
             } else {
-                cs_add_sat(acc.clone(), acc.clone(), res.clone(), 5, id)
+                cs_add_sat(acc.clone(), acc.clone(), res.clone(), acc_size, id)
             }
         }),
         AccOp::Sub => code.push(if ns {
             cs_assign_by(e_sub, acc.clone(), res.clone())
         } else {
             if mode.signed() {
-                cs_ssub_sat(acc.clone(), acc.clone(), res.clone(), 5, id)
+                cs_ssub_sat(acc.clone(), acc.clone(), res.clone(), acc_size, id)
             } else {
                 cs_sub_sat(acc.clone(), acc.clone(), res.clone(), id)
             }

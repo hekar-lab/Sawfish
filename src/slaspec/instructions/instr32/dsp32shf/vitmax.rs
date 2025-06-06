@@ -93,20 +93,22 @@ impl VitMaxFactory {
             }
         }
 
-        fn vitmax(src: &str, lhs: &str, rhs: &str, asr: bool, dual: bool) -> Expr {
+        fn vitmax(src: &str, lhs: &str, rhs: &str, asr: bool, dual: bool, id: &str) -> Expr {
+            let greatl = &format!("vitmax_greater{id}");
+            let endl = &format!("vitmax_end{id}");
             cs_mline(vec![
                 get_oper(src, lhs, rhs),
                 b_ifgoto(
                     e_ges(b_grp(e_sub(b_var(lhs), b_var(rhs))), b_num(0)),
-                    b_label("vitmax_greater"),
+                    b_label(greatl),
                 ),
                 set_bit(false, asr),
                 set_dst(rhs, dual),
-                b_goto(b_label("vitmax_end")),
-                b_label("vitmax_greater"),
+                b_goto(b_label(endl)),
+                b_label(greatl),
                 set_bit(true, asr),
                 set_dst(lhs, dual),
-                b_label("vitmax_end"),
+                b_label(endl),
             ])
         }
 
@@ -122,11 +124,11 @@ impl VitMaxFactory {
             .add_pcode(cs_mline(vec![e_local(lhs_var, 2), e_local(rhs_var, 2)]))
             .add_pcode(if sop.dual() {
                 cs_mline(vec![
-                    vitmax("src1", lhs_var, rhs_var, sop.asr(), true),
-                    vitmax("src0", lhs_var, rhs_var, sop.asr(), true),
+                    vitmax("src1", lhs_var, rhs_var, sop.asr(), true, "_src1"),
+                    vitmax("src0", lhs_var, rhs_var, sop.asr(), true, "_src0"),
                 ])
             } else {
-                vitmax("src0", lhs_var, rhs_var, sop.asr(), false)
+                vitmax("src0", lhs_var, rhs_var, sop.asr(), false, "")
             })
     }
 }

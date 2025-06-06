@@ -156,7 +156,7 @@ impl Mac32Factory {
         e_copy(
             e_local(var_id, 9),
             e_bit_or(
-                b_grp(e_lshft(e_zext(b_reg("A1")), b_num(4))),
+                b_grp(e_lshft(e_zext(b_reg("A1")), b_num(4 * 8))),
                 e_zext(b_reg("A0.W")),
             ),
         )
@@ -188,6 +188,7 @@ impl Mac32Factory {
             code.push(acc_expr(
                 b_var(acc_var_id),
                 params.accop,
+                9,
                 res_var_id,
                 params.mode,
                 params.no_sat,

@@ -6,7 +6,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
     let mut ifam = InstrFamilyBuilder::new_32(
         "Linkage",
         "Save/restore registers and link/unlink frame, multiple cycles",
-        "cla",
+        "lnk",
         [
             ProtoPattern::new(vec![
                 ProtoField::new("sig", FieldType::Mask(0x7400), 15),
@@ -34,7 +34,7 @@ impl LinkageFactory {
             .add_pcode(cs_push(b_reg("RETS"), 4))
             .add_pcode(cs_push(b_reg("FP"), 4))
             .add_pcode(e_copy(b_reg("FP"), b_reg("SP")))
-            .add_pcode(e_copy(b_reg("SP"), e_sub(b_reg("sub"), b_var("imm"))))
+            .add_pcode(e_copy(b_reg("SP"), e_sub(b_reg("SP"), b_var("imm"))))
     }
 
     fn unlink_instr(ifam: &InstrFamilyBuilder) -> InstrBuilder {

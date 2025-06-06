@@ -74,6 +74,11 @@ impl BXORParams {
             code.push(xor_reduc(reduc, data40));
             code.push(cs_assign_by(e_bit_xor, b_var(reduc), e_zext(b_reg("CC"))));
             if self.shift {
+                code.push(e_copy(
+                    b_reg("A0"),
+                    e_bit_or(b_grp(e_lshft(b_reg("A0"), b_num(1))), e_zext(b_var(reduc))),
+                ));
+            } else {
                 code.push(e_copy(b_reg("CC"), b_size(b_var(reduc), 1)));
                 code.push(e_copy(
                     e_rfield("dst"),
@@ -81,11 +86,6 @@ impl BXORParams {
                         b_grp(e_bit_and(e_rfield("dst"), b_num(0xfffe))),
                         b_var(reduc),
                     ),
-                ));
-            } else {
-                code.push(e_copy(
-                    b_reg("A0"),
-                    e_bit_or(b_grp(e_lshft(b_reg("A0"), b_num(1))), e_zext(b_var(reduc))),
                 ));
             }
         } else {

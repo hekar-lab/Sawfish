@@ -35,22 +35,25 @@ impl ExpAdjFactory {
         let res_id = "res_expadj";
         let exp_id = "exp_expadj";
 
-        fn get_exp(dst: Expr, src: Expr) -> Expr {
+        fn get_exp(dst: Expr, src: Expr, id: &str) -> Expr {
+            let endl = &format!("sign_end{id}");
+            let negl = &format!("sign_neg{id}");
             cs_mline(vec![
-                b_ifgoto(e_lts(src.clone(), b_num(0)), b_label("sign_neg")),
+                b_ifgoto(e_lts(src.clone(), b_num(0)), b_label(negl)),
                 e_copy(dst.clone(), e_sub(e_macp("lzcount", src.clone()), b_num(1))),
-                b_goto(b_label("sign_end")),
-                b_label("sign_neg"),
+                b_goto(b_label(endl)),
+                b_label(negl),
                 e_copy(dst, e_sub(e_macp("lzcount", e_bit_not(src)), b_num(1))),
-                b_label("sign_end"),
+                b_label(endl),
             ])
         }
 
-        fn min(dst: Expr, src: Expr) -> Expr {
+        fn min(dst: Expr, src: Expr, id: &str) -> Expr {
+            let minl = &format!("min_end{id}");
             cs_mline(vec![
-                b_ifgoto(e_ge(src.clone(), dst.clone()), b_label("min_end")),
+                b_ifgoto(e_ge(src.clone(), dst.clone()), b_label(minl)),
                 e_copy(dst, src),
-                b_label("min_end"),
+                b_label(minl),
             ])
         }
 
@@ -68,16 +71,16 @@ impl ExpAdjFactory {
             .add_pcode(if sop == Sop::Vec {
                 cs_mline(vec![
                     e_copy(e_local("tmp_src", 2), b_size(e_rfield("src0"), 2)),
-                    get_exp(b_var(exp_id), b_var("tmp_src")),
-                    min(b_var(res_id), b_var(exp_id)),
+                    get_exp(b_var(exp_id), b_var("tmp_src"), "L"),
+                    min(b_var(res_id), b_var(exp_id), "L"),
                     e_copy(b_var("tmp_src"), b_trunc(e_rfield("src0"), 2)),
-                    get_exp(b_var(exp_id), b_var("tmp_src")),
-                    min(b_var(res_id), b_var(exp_id)),
+                    get_exp(b_var(exp_id), b_var("tmp_src"), "H"),
+                    min(b_var(res_id), b_var(exp_id), "H"),
                 ])
             } else {
                 cs_mline(vec![
-                    get_exp(b_var(exp_id), e_rfield("src0")),
-                    min(b_var(res_id), b_var(exp_id)),
+                    get_exp(b_var(exp_id), e_rfield("src0"), ""),
+                    min(b_var(res_id), b_var(exp_id), ""),
                 ])
             })
             .add_pcode(e_copy(e_rfield("dst"), b_var(res_id)))

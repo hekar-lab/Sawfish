@@ -58,7 +58,7 @@ impl Size {
     }
 
     fn epxr(&self) -> Expr {
-        e_ptr(b_var("imm32"), self.bytes())
+        e_ptr(b_grp(b_size(b_var("imm32"), 4)), self.bytes())
     }
 }
 

@@ -60,7 +60,7 @@ impl SearchFactory {
                 b_label("search_end_A0"),
             ]))
             .add_pcode(cs_mline(vec![
-                e_copy(b_var("comp_var"), b_trunc(e_rfield("src1"), 2)),
+                e_copy(b_var("comp_var"), b_trunc(e_rfield("src0"), 2)),
                 b_ifgoto(
                     e_not(b_grp(aop.comp_op()(
                         b_var("comp_var"),

@@ -159,8 +159,8 @@ impl HZS {
 
     fn expr(&self, full_rset: bool) -> Expr {
         let src = match self {
-            Self::S => e_sext(e_rfield("hword")),
-            Self::Z => e_zext(e_rfield("hword")),
+            Self::S => e_sext(b_size(e_rfield("hword"), 2)),
+            Self::Z => e_zext(b_size(e_rfield("hword"), 2)),
             _ => e_rfield("hword"),
         };
         e_copy(e_rfield(if full_rset { "reg" } else { "regL" }), src)
