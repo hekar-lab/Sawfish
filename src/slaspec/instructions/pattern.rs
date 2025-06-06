@@ -18,6 +18,7 @@ pub enum RegisterSet {
     LReg,
     SyRg2,
     SyRg3,
+    LC,
     CBit,
 }
 
@@ -38,6 +39,7 @@ impl RegisterSet {
             Self::LReg => "LReg",
             Self::SyRg2 => "SyRg2",
             Self::SyRg3 => "SyRg3",
+            Self::LC => "LC",
             Self::CBit => "CBIT",
         }
         .to_string()
@@ -104,6 +106,7 @@ impl RegisterSet {
             Self::SyRg3 => Self::build_regs_from(vec![
                 "USP", "SEQSTAT", "SYSCFG", "RETI", "RETX", "RETN", "RETE", "EMUDAT",
             ]),
+            Self::LC => Self::build_regs_from(vec!["LC0", "LC1"]),
             Self::CBit => Self::build_names_from(vec![
                 "AZ", "AN", "AC0COPY", "VCOPY", "_0x04", "CC", "AQ", "_0x07", "RND_MOD", "_0x09",
                 "_0x0a", "_0x0b", "AC0", "AC1", "_0x0e", "_0x0f", "AV0", "AV0S", "AV1", "AV1S",
