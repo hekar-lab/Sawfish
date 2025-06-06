@@ -458,7 +458,7 @@ impl From<[ProtoPattern; 4]> for Pattern {
         let mut word_index: usize = 0;
 
         for word in value {
-            let mut start: usize = word.len() - 1;
+            let mut start: usize = 0;
             for pfield in word.fields.iter().rev() {
                 fields[word_index].push(pfield.to_field(start));
                 start += pfield.size;
