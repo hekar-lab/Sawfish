@@ -94,7 +94,7 @@ impl SLASpecBuilder {
         instr_total += instr_count;
         instr_count = 0;
 
-        let mut ifams_64: Vec<InstrFamilyBuilder> = vec![ldstabs::instr_fam()];
+        let mut ifams_64: Vec<InstrFamilyBuilder> = vec![ldstabs::instr_fam(), ldimm::instr_fam()];
 
         println!("Init 64-bits instructions...");
         for ifam in ifams_64.iter_mut() {
