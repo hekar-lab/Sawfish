@@ -13,7 +13,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
             ProtoField::new("sig", FieldType::Mask(0x03), 8),
             ProtoField::new("d", FieldType::Blank, 1),
             ProtoField::new("op", FieldType::Blank, 2),
-            ProtoField::new("cbit", FieldType::Variable(RegisterSet::CBit), 5),
+            ProtoField::new("cbit", FieldType::Variable(RegisterSet::CBIT), 5),
         ]),
     );
 

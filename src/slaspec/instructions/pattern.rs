@@ -1,4 +1,4 @@
-use std::hash::Hash;
+use std::{fmt, hash::Hash};
 
 use super::util::capitalize;
 
@@ -12,39 +12,33 @@ pub enum RegisterSet {
     DRegO,
     DRegPair,
     PReg,
+    PRegL,
+    PRegH,
     IReg,
+    IRegL,
+    IRegH,
     MReg,
+    MRegL,
+    MRegH,
     BReg,
+    BRegL,
+    BRegH,
     LReg,
+    LRegL,
+    LRegH,
     SyRg2,
     SyRg3,
     LC,
-    CBit,
+    CBIT,
+}
+
+impl fmt::Display for RegisterSet {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl RegisterSet {
-    pub fn name(&self) -> String {
-        match self {
-            Self::DReg => "DReg",
-            Self::DRegL => "DRegL",
-            Self::DRegH => "DRegH",
-            Self::DRegB => "DRegB",
-            Self::DRegE => "DRegE",
-            Self::DRegO => "DRegO",
-            Self::DRegPair => "DRegPair",
-            Self::PReg => "PReg",
-            Self::IReg => "IReg",
-            Self::MReg => "MReg",
-            Self::BReg => "BReg",
-            Self::LReg => "LReg",
-            Self::SyRg2 => "SyRg2",
-            Self::SyRg3 => "SyRg3",
-            Self::LC => "LC",
-            Self::CBit => "CBIT",
-        }
-        .to_string()
-    }
-
     fn build_regs(id: &str, len: usize, suffix: Option<&str>) -> Vec<String> {
         let mut regs = Vec::new();
 
@@ -74,7 +68,7 @@ impl RegisterSet {
 
     pub fn attach_type(&self) -> String {
         match self {
-            Self::CBit => "names",
+            Self::CBIT => "names",
             _ => "variables",
         }
         .to_string()
@@ -96,10 +90,28 @@ impl RegisterSet {
                 regs.append(&mut Self::build_regs_from(vec!["SP", "FP"]));
                 regs
             }
+            Self::PRegL => {
+                let mut regs = Self::build_regs("P", 6, Some("L"));
+                regs.append(&mut Self::build_regs_from(vec!["SP.L", "FP.L"]));
+                regs
+            }
+            Self::PRegH => {
+                let mut regs = Self::build_regs("P", 6, Some("H"));
+                regs.append(&mut Self::build_regs_from(vec!["SP.H", "FP.H"]));
+                regs
+            }
             Self::IReg => Self::build_regs("I", 4, None),
+            Self::IRegL => Self::build_regs("I", 4, Some("L")),
+            Self::IRegH => Self::build_regs("I", 4, Some("H")),
             Self::MReg => Self::build_regs("M", 4, None),
+            Self::MRegL => Self::build_regs("M", 4, Some("L")),
+            Self::MRegH => Self::build_regs("M", 4, Some("H")),
             Self::BReg => Self::build_regs("B", 4, None),
+            Self::BRegL => Self::build_regs("B", 4, Some("L")),
+            Self::BRegH => Self::build_regs("B", 4, Some("H")),
             Self::LReg => Self::build_regs("L", 4, None),
+            Self::LRegL => Self::build_regs("L", 4, Some("L")),
+            Self::LRegH => Self::build_regs("L", 4, Some("H")),
             Self::SyRg2 => Self::build_regs_from(vec![
                 "LC0", "LT0", "LB0", "LC1", "LT1", "LB1", "CYCLES", "CYCLES2",
             ]),
@@ -107,7 +119,7 @@ impl RegisterSet {
                 "USP", "SEQSTAT", "SYSCFG", "RETI", "RETX", "RETN", "RETE", "EMUDAT",
             ]),
             Self::LC => Self::build_regs_from(vec!["LC0", "LC1"]),
-            Self::CBit => Self::build_names_from(vec![
+            Self::CBIT => Self::build_names_from(vec![
                 "AZ", "AN", "AC0COPY", "VCOPY", "_0x04", "CC", "AQ", "_0x07", "RND_MOD", "_0x09",
                 "_0x0a", "_0x0b", "AC0", "AC1", "_0x0e", "_0x0f", "AV0", "AV0S", "AV1", "AV1S",
                 "_0x14", "_0x15", "_0x16", "_0x17", "V", "VS", "_0x1a", "_0x1b", "_0x1c", "_0x1d",
@@ -268,7 +280,7 @@ impl Field {
 
     pub fn name(&self) -> String {
         let suffix = match &self.ftype {
-            FieldType::Variable(regset) => regset.name(),
+            FieldType::Variable(regset) => format!("{regset}"),
             FieldType::UImmVal => String::from("UImm"),
             FieldType::SImmVal => String::from("SImm"),
             _ => String::new(),
