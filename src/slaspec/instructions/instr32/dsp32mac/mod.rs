@@ -37,6 +37,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ],
     );
 
+    ifam.set_multi(true);
     ifam.add_instrs(&CmplxMacFactory());
     ifam.add_instrs(&TradMacFactory());
 

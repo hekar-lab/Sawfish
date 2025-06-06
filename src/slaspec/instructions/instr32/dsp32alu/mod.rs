@@ -57,6 +57,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ],
     );
 
+    ifam.set_multi(true);
     ifam.add_pcodeop("disalgnexcpt");
 
     ifam.add_instrs(&AddSubVecFactory());

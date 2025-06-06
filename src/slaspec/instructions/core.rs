@@ -216,6 +216,7 @@ pub struct InstrFamilyBuilder {
     tokens: [HashSet<Field>; 4],
     variables: HashSet<Field>,
     pcodeops: Vec<String>,
+    multi: bool,
 }
 
 impl InstrFamilyBuilder {
@@ -234,6 +235,7 @@ impl InstrFamilyBuilder {
             ],
             variables: HashSet::new(),
             pcodeops: Vec::new(),
+            multi: false,
         }
     }
 
@@ -252,6 +254,7 @@ impl InstrFamilyBuilder {
             ],
             variables: HashSet::new(),
             pcodeops: Vec::new(),
+            multi: false,
         }
     }
 
@@ -270,6 +273,7 @@ impl InstrFamilyBuilder {
             ],
             variables: HashSet::new(),
             pcodeops: Vec::new(),
+            multi: false,
         }
     }
 
@@ -279,6 +283,10 @@ impl InstrFamilyBuilder {
 
     pub fn instrs(&self) -> &Vec<InstrBuilder> {
         &self.instructions
+    }
+
+    pub fn set_multi(&mut self, multi: bool) {
+        self.multi = multi;
     }
 
     pub fn add_pcodeop(&mut self, pcodeop: &str) {
@@ -294,6 +302,9 @@ impl InstrFamilyBuilder {
             for (wi, word) in instr.pattern().fields().iter().enumerate() {
                 for field in word {
                     if field.is_blank() {
+                        if self.multi && field.id() == "m" {
+                            self.tokens[wi].insert(field.clone());
+                        }
                         continue;
                     }
                     if field.is_var() {
@@ -427,10 +438,24 @@ impl InstrFamilyBuilder {
     }
 
     fn build_final_instr(&self) -> String {
-        format!(
-            ":^{ifam} is {ifam} {{ build {ifam}; }}\n",
-            ifam = self.name()
-        )
+        if self.multi {
+            let mut instr = format!(
+                ":^{ifam} is {}M=0x0 ... & {ifam} {{ build {ifam}; }}\n",
+                self.prefix,
+                ifam = self.name()
+            );
+            instr += &format!(
+                ":^{ifam} is {}M=0x1 ... & {ifam} {{ build {ifam}; delayslot(4); }}\n",
+                self.prefix,
+                ifam = self.name()
+            );
+            instr
+        } else {
+            format!(
+                ":^{ifam} is {ifam} {{ build {ifam}; }}\n",
+                ifam = self.name()
+            )
+        }
     }
 
     pub fn build(&self) -> String {

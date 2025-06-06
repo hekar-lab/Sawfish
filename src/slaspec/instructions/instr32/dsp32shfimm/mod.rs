@@ -35,6 +35,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ],
     );
 
+    ifam.set_multi(true);
     ifam.add_instrs(&Shift16Factory());
     ifam.add_instrs(&Shift16VecFactory());
     ifam.add_instrs(&Shift32Factory());

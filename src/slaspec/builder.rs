@@ -1,5 +1,5 @@
 use std::fs::{File, copy, create_dir_all};
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::Path;
 
 use super::globals::{ALIGNMENT, ENDIAN, RAM_SAPCE, REGISTER_SPACE};
@@ -138,9 +138,17 @@ impl SLASpecBuilder {
             "define space {} type=register_space size=2;\n",
             REGISTER_SPACE
         );
-        header += "\n";
+        header += "\n\n";
 
         header
+    }
+
+    fn hwloop_sinc() -> Vec<u8> {
+        let mut file = File::open("data/loop.sinc.part").unwrap();
+        let mut data = vec![];
+
+        file.read_to_end(&mut data).unwrap();
+        data
     }
 
     fn build_main_file(path: &Path) {
@@ -148,10 +156,12 @@ impl SLASpecBuilder {
         file.write_all(Self::build_main_header().as_bytes())
             .unwrap();
 
+        file.write_all(&Self::hwloop_sinc()).unwrap();
+
         file.write_all("@include \"includes/registers.sinc\"\n\n".as_bytes())
             .unwrap();
 
-        file.write_all("@include \"includes/instructions.sinc\"\n\n".as_bytes())
+        file.write_all("with: phase=1 {\n@include \"includes/instructions.sinc\"\n}\n".as_bytes())
             .unwrap();
     }
 

@@ -39,6 +39,7 @@ pub fn instr_fam() -> InstrFamilyBuilder {
         ],
     );
 
+    ifam.set_multi(true);
     ifam.add_instrs(&Mult16Factory());
     ifam.add_instrs(&Mac32Factory());
     ifam.add_instrs(&Mult32Factory());
