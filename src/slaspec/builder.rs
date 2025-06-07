@@ -2,6 +2,8 @@ use std::fs::{File, copy, create_dir_all};
 use std::io::{Read, Write};
 use std::path::Path;
 
+use crate::slaspec::instructions::core::Prefixed;
+
 use super::globals::{ALIGNMENT, ENDIAN, RAM_SAPCE, REGISTER_SPACE};
 use super::instructions::core::InstrFamilyBuilder;
 
@@ -51,12 +53,8 @@ impl SLASpecBuilder {
         println!("Init 16-bits instructions...");
         for ifam in ifams_16.iter_mut() {
             ifam.init_tokens_and_vars();
-            println!(
-                "\t{:16} -> {:6} intruction(s)",
-                ifam.name(),
-                ifam.instrs().len()
-            );
-            instr_count += ifam.instrs().len();
+            println!("\t{:16} -> {:6} intruction(s)", ifam.name(), ifam.len());
+            instr_count += ifam.len();
         }
         println!("Count: {} 16-bits instructions\n", instr_count);
         instr_total += instr_count;
@@ -83,12 +81,8 @@ impl SLASpecBuilder {
         println!("Init 32-bits instructions...");
         for ifam in ifams_32.iter_mut() {
             ifam.init_tokens_and_vars();
-            println!(
-                "\t{:16} -> {:6} intruction(s)",
-                ifam.name(),
-                ifam.instrs().len()
-            );
-            instr_count += ifam.instrs().len();
+            println!("\t{:16} -> {:6} intruction(s)", ifam.name(), ifam.len());
+            instr_count += ifam.len();
         }
         println!("Count: {} 32-bits instructions\n", instr_count);
         instr_total += instr_count;
@@ -103,12 +97,8 @@ impl SLASpecBuilder {
         println!("Init 64-bits instructions...");
         for ifam in ifams_64.iter_mut() {
             ifam.init_tokens_and_vars();
-            println!(
-                "\t{:16} -> {:6} intruction(s)",
-                ifam.name(),
-                ifam.instrs().len()
-            );
-            instr_count += ifam.instrs().len();
+            println!("\t{:16} -> {:6} intruction(s)", ifam.name(), ifam.len());
+            instr_count += ifam.len();
         }
         println!("Count: {} 64-bits instructions\n", instr_count);
         instr_total += instr_count;
@@ -169,6 +159,53 @@ impl SLASpecBuilder {
         format!("@include \"{}/{}\"\n", dir, file)
     }
 
+    fn create_family_file(
+        ifam: &InstrFamilyBuilder,
+        instr_str: &str,
+        instr_dir: &Path,
+        inc_file: &mut File,
+    ) {
+        let filename = format!("{}.sinc", ifam.name());
+        let instr_path = instr_dir.join(&filename);
+        inc_file
+            .write_all(Self::instr_file_inc(instr_str, &filename).as_bytes())
+            .unwrap();
+        let mut instr_file = File::create(instr_path).unwrap();
+
+        instr_file.write_all(ifam.build().as_bytes()).unwrap();
+    }
+
+    fn create_family_dir(
+        ifam: &InstrFamilyBuilder,
+        instr_str: &str,
+        instr_dir: &Path,
+        inc_file: &mut File,
+    ) {
+        let instr_dir_path = instr_dir.join(ifam.name());
+        let instr_fname = format!("{}.sinc", ifam.name());
+        let instr_inc_path = instr_dir.join(&instr_fname);
+
+        inc_file
+            .write_all(Self::instr_file_inc(instr_str, &instr_fname).as_bytes())
+            .unwrap();
+        let mut instr_file = File::create(instr_inc_path).unwrap();
+
+        instr_file.write_all(ifam.build_head().as_bytes()).unwrap();
+        create_dir_all(&instr_dir_path).unwrap();
+
+        for (id, instr) in ifam.build_id_instrs() {
+            let instr_id_fname = format!("{}-{}.sinc", ifam.prefix(), id);
+            let instr_id_path = instr_dir_path.join(&instr_id_fname);
+
+            instr_file
+                .write_all(Self::instr_file_inc(&ifam.name(), &instr_id_fname).as_bytes())
+                .unwrap();
+            let mut instr_id_file = File::create(instr_id_path).unwrap();
+
+            instr_id_file.write_all(instr.as_bytes()).unwrap();
+        }
+    }
+
     fn build_instrs(
         instrs: &Vec<InstrFamilyBuilder>,
         inc_dir: &Path,
@@ -180,14 +217,11 @@ impl SLASpecBuilder {
         create_dir_all(&instr_dir).unwrap();
 
         for ifam in instrs {
-            let filename = format!("{}.sinc", ifam.name());
-            let instr_path = instr_dir.join(&filename);
-            inc_file
-                .write_all(Self::instr_file_inc(instr_str, &filename).as_bytes())
-                .unwrap();
-            let mut instr_file = File::create(instr_path).unwrap();
-
-            instr_file.write_all(ifam.build().as_bytes()).unwrap();
+            if ifam.sub_fam() == 1 {
+                Self::create_family_file(ifam, instr_str, &instr_dir, inc_file);
+            } else {
+                Self::create_family_dir(ifam, instr_str, &instr_dir, inc_file);
+            }
         }
     }
 

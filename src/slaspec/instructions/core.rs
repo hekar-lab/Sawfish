@@ -1,4 +1,6 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
+
+use itertools::Itertools;
 
 use crate::slaspec::instructions::{format::display_format, pattern::Pattern};
 
@@ -212,7 +214,7 @@ pub struct InstrFamilyBuilder {
     desc: String,
     prefix: String,
     base_pattern: Pattern,
-    instructions: Vec<InstrBuilder>,
+    instructions: HashMap<String, Vec<InstrBuilder>>,
     tokens: [HashSet<Field>; 4],
     variables: HashSet<Field>,
     pcodeops: Vec<String>,
@@ -226,7 +228,7 @@ impl InstrFamilyBuilder {
             desc: String::from(desc),
             prefix: String::from(prefix),
             base_pattern: Pattern::from(base_pattern),
-            instructions: Vec::new(),
+            instructions: HashMap::new(),
             tokens: [
                 HashSet::new(),
                 HashSet::new(),
@@ -245,7 +247,7 @@ impl InstrFamilyBuilder {
             desc: String::from(desc),
             prefix: String::from(prefix),
             base_pattern: Pattern::from(base_pattern),
-            instructions: Vec::new(),
+            instructions: HashMap::new(),
             tokens: [
                 HashSet::new(),
                 HashSet::new(),
@@ -264,7 +266,7 @@ impl InstrFamilyBuilder {
             desc: String::from(desc),
             prefix: String::from(prefix),
             base_pattern: Pattern::from(base_pattern),
-            instructions: Vec::new(),
+            instructions: HashMap::new(),
             tokens: [
                 HashSet::new(),
                 HashSet::new(),
@@ -281,8 +283,18 @@ impl InstrFamilyBuilder {
         self.name.clone()
     }
 
-    pub fn instrs(&self) -> &Vec<InstrBuilder> {
-        &self.instructions
+    pub fn len(&self) -> usize {
+        let mut total = 0;
+
+        for instrs in self.instructions.values() {
+            total += instrs.len();
+        }
+
+        total
+    }
+
+    pub fn sub_fam(&self) -> usize {
+        self.instructions.len()
     }
 
     pub fn set_multi(&mut self, multi: bool) {
@@ -294,25 +306,40 @@ impl InstrFamilyBuilder {
     }
 
     pub fn add_instrs<Factory: InstrFactory>(&mut self, factory: &Factory) {
-        self.instructions.append(&mut factory.build_instrs(&self));
+        self.add_id_instrs("base", factory);
+    }
+
+    pub fn add_id_instrs<Factory: InstrFactory>(&mut self, id: &str, factory: &Factory) {
+        if !self.instructions.contains_key(id) {
+            self.instructions.insert(id.to_string(), Vec::new());
+        }
+
+        let mut factory_instrs = factory.build_instrs(&self);
+        match self.instructions.get_mut(id) {
+            Some(instrs) => instrs.append(&mut factory_instrs),
+            None => println!("Couldn't add instructions to family"),
+        }
     }
 
     pub fn init_tokens_and_vars(&mut self) {
-        for instr in &self.instructions {
-            for (wi, word) in instr.pattern().fields().iter().enumerate() {
-                for field in word {
-                    if field.is_blank() {
-                        if self.multi && field.id() == "m" {
-                            self.tokens[wi].insert(field.clone());
-                        }
-                        continue;
-                    }
-                    if field.is_var() {
-                        self.variables.insert(field.clone());
-                    }
+        for (wi, field) in self
+            .instructions
+            .iter()
+            .sorted_by_key(|(id, _inst)| (*id).clone())
+            .flat_map(|(_id, instrs)| instrs)
+            .flat_map(|instr| instr.pattern().fields().into_iter().enumerate())
+            .flat_map(|(wi, fields)| fields.into_iter().map(move |field| (wi, field)))
+        {
+            if field.is_blank() {
+                if self.multi && field.id() == "m" {
                     self.tokens[wi].insert(field.clone());
                 }
+                continue;
             }
+            if field.is_var() {
+                self.variables.insert(field.clone());
+            }
+            self.tokens[wi].insert(field.clone());
         }
     }
 
@@ -420,45 +447,79 @@ impl InstrFamilyBuilder {
         pcodeops_str
     }
 
-    fn build_instructions(&self) -> String {
+    fn build_instructions(&self, id: &str) -> String {
         let mut instr_str = String::new();
         let mut instr_count = 0;
 
-        for instr in &self.instructions {
+        for instr in self.instructions.get(id).unwrap() {
             let literal_desc = format!("{}Desc{:02X}", self.name, instr_count);
             let (build, alt_disp) = instr.build(literal_desc.clone());
             if alt_disp {
                 instr_str += &format!("{literal_desc}: \"{}\" is epsilon {{}}\n", instr.display);
             }
-            instr_str += &format!("{}{}\n\n", self.name, build);
+
+            if id == "base" {
+                instr_str += &format!("{}{}\n\n", self.name, build);
+            } else {
+                instr_str += &format!("{}{id}{}\n\n", self.name, build);
+            }
+
             instr_count += 1;
         }
 
         instr_str
     }
 
-    fn build_final_instr(&self) -> String {
+    fn build_all_instructions(&self) -> String {
+        let mut all_instrs = String::new();
+
+        for id in self.instructions.keys().sorted() {
+            all_instrs += &self.build_instructions(id);
+        }
+
+        all_instrs
+    }
+
+    fn build_id_final_instr(&self, id: &str) -> String {
         if self.multi {
             let mut instr = format!(
-                ":^{ifam} is {}M=0x0 ... & {ifam} {{ build {ifam}; }}\n",
+                ":^{ifam}{id} is {}M=0x0 ... & {ifam}{id} {{ build {ifam}{id}; }}\n",
                 self.prefix,
                 ifam = self.name()
             );
             instr += &format!(
-                ":^{ifam} is {}M=0x1 ... & {ifam} {{ build {ifam}; delayslot(4); }}\n",
+                ":^{ifam}{id} is {}M=0x1 ... & {ifam}{id} {{ build {ifam}{id}; delayslot(4); }}\n",
                 self.prefix,
                 ifam = self.name()
             );
             instr
         } else {
             format!(
-                ":^{ifam} is {ifam} {{ build {ifam}; }}\n",
+                ":^{ifam}{id} is {ifam}{id} {{ build {ifam}{id}; }}\n",
                 ifam = self.name()
             )
         }
     }
 
-    pub fn build(&self) -> String {
+    fn build_final_instr(&self, id: &str) -> String {
+        if id == "base" {
+            Self::build_id_final_instr(&self, "")
+        } else {
+            Self::build_id_final_instr(&self, id)
+        }
+    }
+
+    fn build_all_final_instrs(&self) -> String {
+        let mut final_instrs = String::new();
+
+        for id in self.instructions.keys().sorted() {
+            final_instrs += &self.build_final_instr(id);
+        }
+
+        final_instrs
+    }
+
+    pub fn build_head(&self) -> String {
         let mut build = String::new();
         build += &format!("{}\n", self.build_desc());
         build += &format!("### Tokens ###\n\n{}\n", self.build_tokens());
@@ -468,13 +529,38 @@ impl InstrFamilyBuilder {
         if !self.pcodeops.is_empty() {
             build += &format!("### Operations ###\n\n{}\n\n", self.build_pcodeops());
         }
+
+        build
+    }
+
+    pub fn build(&self) -> String {
+        let mut build = String::new();
+        build += &self.build_head();
         build += &format!(
             "### Instructions ###\n\n{}\n\n{}",
-            self.build_instructions(),
-            self.build_final_instr()
+            self.build_all_instructions(),
+            self.build_all_final_instrs()
         );
 
         build
+    }
+
+    pub fn build_id_instrs(&self) -> Vec<(String, String)> {
+        let mut id_instrs = vec![];
+
+        for id in self.instructions.keys().sorted() {
+            id_instrs.push((
+                id.clone(),
+                format!(
+                    "### Instructions for {}: {id} ###\n\n{}\n\n{}",
+                    self.name(),
+                    self.build_instructions(id),
+                    self.build_final_instr(id)
+                ),
+            ));
+        }
+
+        id_instrs
     }
 }
 

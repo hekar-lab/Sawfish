@@ -88,6 +88,7 @@ pub fn rot(dst: Expr, src: Expr, size: usize, id: &str) -> Expr {
     let mut code = vec![
         e_local(res_var, size),
         e_local(bit_var, size),
+        e_local(shftrot_var, 2),
         get_shift(shftrot_var, nbits_shft),
         b_ifgoto(e_gts(b_var(shftrot_var), b_num(0)), b_label(rrot_lab)),
         b_ifgoto(e_lts(b_var(shftrot_var), b_num(0)), b_label(lrot_lab)),

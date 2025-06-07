@@ -5,6 +5,7 @@ use cmplxmac::CmplxMacFactory;
 use tradmac::TradMacFactory;
 
 use crate::slaspec::instructions::core::InstrFamilyBuilder;
+use crate::slaspec::instructions::instr32::common32::Mmode;
 use crate::slaspec::instructions::pattern::{FieldType, ProtoField, ProtoPattern};
 
 pub fn instr_fam() -> InstrFamilyBuilder {
@@ -38,8 +39,32 @@ pub fn instr_fam() -> InstrFamilyBuilder {
     );
 
     ifam.set_multi(true);
-    ifam.add_instrs(&CmplxMacFactory());
-    ifam.add_instrs(&TradMacFactory());
+    ifam.add_id_instrs("Cplx", &CmplxMacFactory());
+
+    let mmod0 = Mmode::mmod0();
+    let mmod1 = Mmode::mmod1();
+    let mmode = Mmode::mmode();
+
+    for mode in mmod0 {
+        ifam.add_id_instrs(
+            &format!("TradM0{:?}", mode),
+            &TradMacFactory::new(false, false, mode),
+        );
+    }
+
+    for mode in mmod1 {
+        ifam.add_id_instrs(
+            &format!("TradM1{:?}", mode),
+            &TradMacFactory::new(true, false, mode),
+        );
+    }
+
+    for mode in mmode {
+        ifam.add_id_instrs(
+            &format!("TradME{:?}", mode),
+            &TradMacFactory::new(true, true, mode),
+        );
+    }
 
     ifam
 }

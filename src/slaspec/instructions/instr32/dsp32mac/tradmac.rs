@@ -348,64 +348,40 @@ impl TradMacParam {
         macs
     }
 
-    fn all_params() -> Vec<Self> {
-        let mmod0 = Mmode::mmod0();
-        let mmod1 = Mmode::mmod1();
-        let mmode = Mmode::mmode();
-
-        let mml = [false, true];
-
-        let mut mmod0_params: Vec<TradMacParam> = Self::all_macs(false)
+    fn params(assign: bool, full_reg: bool, mode: Mmode) -> Vec<Self> {
+        Self::all_macs(assign)
             .into_iter()
-            .cartesian_product(mml.iter())
-            .cartesian_product(mmod0)
-            .filter_map(|(((mac0, mac1), mml), mode)| {
-                if (mac0.is_some() && mac0.unwrap().no_accop())
-                    || (mac1.is_some() && mac1.unwrap().no_accop())
-                    || (mac1.is_none()) && *mml
+            .cartesian_product([false, true])
+            .filter_map(|((mac0, mac1), mml)| {
+                if (!assign
+                    && ((mac0.is_some() && mac0.unwrap().no_accop())
+                        || (mac1.is_some() && mac1.unwrap().no_accop())))
+                    || (mac1.is_none()) && mml
                 {
                     None
                 } else {
-                    Some(Self::new(mac0, mac1, mode, *mml, false))
+                    Some(Self::new(mac0, mac1, mode, mml, full_reg))
                 }
             })
-            .collect();
-
-        let mut mmod1_params: Vec<TradMacParam> = Self::all_macs(true)
-            .into_iter()
-            .cartesian_product(mml.iter())
-            .cartesian_product(mmod1)
-            .filter_map(|(((mac0, mac1), mml), mode)| {
-                if (mac1.is_none()) && *mml {
-                    None
-                } else {
-                    Some(Self::new(mac0, mac1, mode, *mml, false))
-                }
-            })
-            .collect();
-
-        let mut mmode_params: Vec<TradMacParam> = Self::all_macs(true)
-            .into_iter()
-            .cartesian_product(mml.iter())
-            .cartesian_product(mmode)
-            .filter_map(|(((mac0, mac1), mml), mode)| {
-                if (mac1.is_none()) && *mml {
-                    None
-                } else {
-                    Some(Self::new(mac0, mac1, mode, *mml, true))
-                }
-            })
-            .collect();
-
-        mmod0_params.append(&mut mmod1_params);
-        mmod0_params.append(&mut mmode_params);
-        mmod0_params
+            .collect()
     }
 }
 
-pub struct TradMacFactory();
+pub struct TradMacFactory {
+    assign: bool,
+    full_reg: bool,
+    mode: Mmode,
+}
 
 impl TradMacFactory {
+    pub fn new(assign: bool, full_reg: bool, mode: Mmode) -> Self {
+        Self {
+            assign,
+            full_reg,
+            mode,
+        }
+    }
+
     fn base_instr(ifam: &InstrFamilyBuilder, params: &TradMacParam) -> InstrBuilder {
         let mut instr = InstrBuilder::new(ifam)
             .name(&params.name())
@@ -419,7 +395,7 @@ impl TradMacFactory {
 
 impl InstrFactory for TradMacFactory {
     fn build_instrs(&self, ifam: &InstrFamilyBuilder) -> Vec<InstrBuilder> {
-        TradMacParam::all_params()
+        TradMacParam::params(self.assign, self.full_reg, self.mode)
             .into_iter()
             .map(|params| Self::base_instr(ifam, &params))
             .collect()
